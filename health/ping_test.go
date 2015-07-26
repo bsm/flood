@@ -50,7 +50,7 @@ var _ = Describe("Ping", func() {
 		defer ping.Stop()
 
 		Expect(ping.IsHealthy()).To(BeFalse())
-		Eventually(ping.IsHealthy, "5ms", "1ms").Should(BeTrue())
+		Eventually(ping.IsHealthy, "10ms", "2ms").Should(BeTrue())
 	})
 
 })
