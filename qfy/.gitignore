@@ -1,0 +1,7 @@
+testdata/attrs.json
+testdata/facts.json
+*.profile
+*.dot
+*.test
+*.svg
+*.png
