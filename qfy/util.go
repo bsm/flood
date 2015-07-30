@@ -27,13 +27,6 @@ const (
 	TypeIntSlice
 )
 
-// Attribute defines a qualifiable fact attribute;
-// must have a name and a type
-type Attribute struct {
-	Name string
-	Type AttrType
-}
-
 // --------------------------------------------------------------------
 
 // RuleDef contains a JSON-parseable rule definition
