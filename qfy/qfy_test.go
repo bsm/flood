@@ -2,7 +2,6 @@ package qfy
 
 import (
 	"bytes"
-	"encoding/json"
 	"testing"
 
 	"github.com/bsm/intset"
@@ -14,31 +13,26 @@ var _ = Describe("Qualifier", func() {
 	var subject *Qualifier
 
 	BeforeEach(func() {
-		subject = New([]Attribute{
-			{"unused", TypeStringSlice},
-			{"country", TypeStringSlice},
-			{"browser", TypeStringSlice},
-			{"domains", TypeStringSlice},
-		})
+		subject = New([]string{"unused", "country", "browser", "domains"})
 
 		err := subject.Feed(91, []RuleDef{
-			{Attr: "country", Op: "+", Vals: json.RawMessage(`["US"]`)},
-			{Attr: "browser", Op: "-", Vals: json.RawMessage(`["IE"]`)},
-			{Attr: "domains", Op: "+", Vals: json.RawMessage(`["a.com", "b.com"]`)},
-			{Attr: "domains", Op: "-", Vals: json.RawMessage(`["c.com"]`)},
+			{Attr: "country", Op: "+", Vals: []string{"US"}},
+			{Attr: "browser", Op: "-", Vals: []string{"IE"}},
+			{Attr: "domains", Op: "+", Vals: []string{"a.com", "b.com"}},
+			{Attr: "domains", Op: "-", Vals: []string{"c.com"}},
 		})
 		Expect(err).NotTo(HaveOccurred())
 
 		err = subject.Feed(92, []RuleDef{
-			{Attr: "country", Op: "-", Vals: json.RawMessage(`["CA"]`)},
-			{Attr: "domains", Op: "+", Vals: json.RawMessage(`["b.com", "c.com"]`)},
-			{Attr: "domains", Op: "+", Vals: json.RawMessage(`["d.com", "a.com"]`)},
+			{Attr: "country", Op: "-", Vals: []string{"CA"}},
+			{Attr: "domains", Op: "+", Vals: []string{"b.com", "c.com"}},
+			{Attr: "domains", Op: "+", Vals: []string{"d.com", "a.com"}},
 		})
 		Expect(err).NotTo(HaveOccurred())
 
 		err = subject.Feed(93, []RuleDef{
-			{Attr: "country", Op: "+", Vals: json.RawMessage(`["US"]`)},
-			{Attr: "browser", Op: "-", Vals: json.RawMessage(`["OP"]`)},
+			{Attr: "country", Op: "+", Vals: []string{"US"}},
+			{Attr: "browser", Op: "-", Vals: []string{"OP"}},
 		})
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -50,15 +44,15 @@ var _ = Describe("Qualifier", func() {
 
 	It("should reject bad feed inputs", func() {
 		Expect(subject.Feed(96, []RuleDef{
-			{Attr: "country", Op: "*", Vals: json.RawMessage(`["US"]`)},
+			{Attr: "country", Op: "*", Vals: []string{"US"}},
 		})).To(HaveOccurred())
 
 		Expect(subject.Feed(96, []RuleDef{
-			{Attr: "country", Op: "+", Vals: json.RawMessage(`{"a":1}`)},
+			{Attr: "country", Op: "+", Vals: map[string]int{"a": 1}},
 		})).To(HaveOccurred())
 
 		Expect(subject.Feed(96, []RuleDef{
-			{Attr: "country", Op: "-", Vals: json.RawMessage(`[]`)},
+			{Attr: "country", Op: "-", Vals: []string{}},
 		})).To(HaveOccurred())
 	})
 

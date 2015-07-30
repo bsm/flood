@@ -7,31 +7,10 @@ import (
 	"testing"
 )
 
-var benchattrs = []Attribute{
-	{"wl", TypeIntSlice},
-	{"strm", TypeStringSlice},
-	{"dev", TypeStringSlice},
-	{"pos", TypeIntSlice},
-	{"hb", TypeIntSlice},
-	{"wr", TypeIntSlice},
-	{"klmn", TypeIntSlice},
-	{"mob", TypeIntSlice},
-	{"ws", TypeIntSlice},
-	{"loc", TypeStringSlice},
-	{"isp", TypeStringSlice},
-	{"pcode", TypeStringSlice},
-	{"bwsm", TypeStringSlice},
-	{"ctry", TypeStringSlice},
-	{"tod", TypeIntSlice},
-	{"ac", TypeStringSlice},
-	{"pmnt", TypeStringSlice},
-	{"exch", TypeIntSlice},
-	{"reg", TypeStringSlice},
-	{"infq", TypeStringSlice},
-	{"rcat", TypeIntSlice},
-	{"vcat", TypeIntSlice},
-	{"kws", TypeStringSlice},
-	{"domain", TypeStringSlice},
+var benchattrs = []string{
+	"wl", "strm", "dev", "pos", "hb", "wr", "klmn", "mob",
+	"ws", "loc", "isp", "pcode", "bwsm", "ctry", "tod", "ac",
+	"pmnt", "exch", "reg", "infq", "rcat", "vcat", "kws", "domain",
 }
 
 func BenchmarkQualifier(b *testing.B) {

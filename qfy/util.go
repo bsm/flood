@@ -38,20 +38,36 @@ type Attribute struct {
 
 // RuleDef contains a JSON-parseable rule definition
 type RuleDef struct {
-	Attr string          `json:"attr"`   // the attribute name
-	Op   string          `json:"op"`     // the operation code, either '+' or '-'
-	Vals json.RawMessage `json:"values"` // the rule values, can be either an array of strings or ints
+	Attr string      // the attribute name
+	Op   string      // the operation code, either '+' or '-'
+	Vals interface{} // the rule values, can be either an array of strings or ints
+}
+
+// UnmarshalJSON decodes JSON
+func (r *RuleDef) UnmarshalJSON(data []byte) error {
+	var temp *ruleDef
+	err := json.Unmarshal(data, &temp)
+	if err != nil {
+		return err
+	}
+
+	rdef := RuleDef{Attr: temp.Attr, Op: temp.Op, Vals: nil}
+	if rdef.Vals, err = temp.DecodeVals(); err != nil {
+		return err
+	}
+
+	*r = rdef
+	_, err = r.DetectType()
+	return err
 }
 
 // DetectType attempts to detect the type of the values
 func (r *RuleDef) DetectType() (AttrType, error) {
-	var nums []int
-	var strs []string
-
-	if json.Unmarshal(r.Vals, &nums) == nil {
-		return TypeIntSlice, nil
-	} else if json.Unmarshal(r.Vals, &strs) == nil {
+	switch r.Vals.(type) {
+	case []string, string:
 		return TypeStringSlice, nil
+	case []int, int:
+		return TypeIntSlice, nil
 	}
 	return TypeUnknown, r.invalid()
 }
@@ -60,22 +76,18 @@ func (r *RuleDef) invalid() error {
 	return fmt.Errorf("qfy: invalid rule: %s %s%v", r.Attr, r.Op, r.Vals)
 }
 
-func (r *RuleDef) toRule(kind AttrType, dict strDict) (Rule, error) {
+func (r *RuleDef) toRule(dict strDict) (Rule, error) {
 	var vals []int
 
-	switch kind {
-	case TypeStringSlice:
-		var strs []string
-		if json.Unmarshal(r.Vals, &strs) != nil {
-			return nil, r.invalid()
-		}
-		vals = dict.FetchSlice(strs...)
-	case TypeIntSlice:
-		if json.Unmarshal(r.Vals, &vals) != nil {
-			return nil, r.invalid()
-		}
-	default:
-		return nil, r.invalid()
+	switch vv := r.Vals.(type) {
+	case []string:
+		vals = dict.FetchSlice(vv...)
+	case []int:
+		vals = vv
+	case string:
+		vals = dict.FetchSlice(vv)
+	case int:
+		vals = []int{vv}
 	}
 
 	if len(vals) == 0 {
@@ -89,6 +101,47 @@ func (r *RuleDef) toRule(kind AttrType, dict strDict) (Rule, error) {
 		return newMinusRule(vals), nil
 	}
 	return nil, r.invalid()
+}
+
+// --------------------------------------------------------------------
+
+type ruleDef struct {
+	Attr string          `json:"attr"`
+	Op   string          `json:"op"`
+	Vals json.RawMessage `json:"values"`
+}
+
+func (r *ruleDef) DecodeVals() (interface{}, error) {
+	raw := r.Vals
+	if len(raw) == 0 {
+		return nil, nil
+	}
+
+	switch raw[0] {
+	case '[': // slice
+		for _, c := range raw[1:] {
+
+			switch c {
+			case '"': // string slice
+				var vals []string
+				err := json.Unmarshal(raw, &vals)
+				return vals, err
+			case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9': // int slice
+				var vals []int
+				err := json.Unmarshal(raw, &vals)
+				return vals, err
+			}
+		}
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9': // int
+		var val int
+		err := json.Unmarshal(raw, &val)
+		return val, err
+	case '"': // string
+		var val string
+		err := json.Unmarshal(raw, &val)
+		return val, err
+	}
+	return nil, nil
 }
 
 // --------------------------------------------------------------------

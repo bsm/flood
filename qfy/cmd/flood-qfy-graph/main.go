@@ -39,10 +39,7 @@ func main() {
 	targets, err := readTargetsFile()
 	abortOn(err)
 
-	attrs, err := parseAttributes(targets, strings.Split(argv.attrs, ","))
-	abortOn(err)
-
-	qualifier := qfy.New(attrs)
+	qualifier := qfy.New(strings.Split(argv.attrs, ","))
 	for _, tdef := range targets {
 		qualifier.Feed(tdef.ID, tdef.Rules)
 	}
@@ -67,27 +64,4 @@ func readTargetsFile() ([]targeting, error) {
 		res = res[:argv.limit]
 	}
 	return res, nil
-}
-
-func parseAttributes(targets []targeting, only []string) ([]qfy.Attribute, error) {
-	kinds := make(map[string]qfy.AttrType, 10)
-
-	for _, tdef := range targets {
-		for _, rdef := range tdef.Rules {
-			kind, err := rdef.DetectType()
-			if err != nil {
-				return nil, err
-			}
-
-			kinds[rdef.Attr] = kind
-		}
-	}
-
-	attrs := make([]qfy.Attribute, 0, len(only))
-	for _, name := range only {
-		if kind, ok := kinds[name]; ok {
-			attrs = append(attrs, qfy.Attribute{name, kind})
-		}
-	}
-	return attrs, nil
 }

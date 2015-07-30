@@ -11,7 +11,7 @@ import (
 // Qualifier represents a rule engine that can match a fact against a
 // list of rule-sets using a fixed set of attributes
 type Qualifier struct {
-	attrs []Attribute
+	attrs []string
 	root  *rootNode
 	dict  strDict
 
@@ -19,7 +19,7 @@ type Qualifier struct {
 }
 
 // New creates a new qualifier with a list of known/qualifiable attributes
-func New(attrs []Attribute) *Qualifier {
+func New(attrs []string) *Qualifier {
 	q := &Qualifier{
 		attrs: attrs,
 		root:  &rootNode{},
@@ -40,8 +40,8 @@ func (q *Qualifier) Feed(id int, ruleSet []RuleDef) error {
 		var rules RuleSet
 
 		for _, rdef := range ruleSet {
-			if rdef.Attr == attr.Name {
-				rule, err := rdef.toRule(attr.Type, q.dict)
+			if rdef.Attr == attr {
+				rule, err := rdef.toRule(q.dict)
 				if err != nil {
 					return err
 				}
@@ -52,7 +52,7 @@ func (q *Qualifier) Feed(id int, ruleSet []RuleDef) error {
 		if len(rules) == 0 {
 			child = &passNode{}
 		} else {
-			child = newClauseNode(attr.Name, rules)
+			child = newClauseNode(attr, rules)
 		}
 		parent = parent.Merge(child)
 	}
