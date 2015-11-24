@@ -1,160 +1,57 @@
 package qfy
 
 import (
-	"encoding/json"
-	"fmt"
+	"encoding/binary"
 	"hash/crc64"
+	"sort"
 
 	"github.com/bsm/intset"
 )
 
 var crcTable = crc64.MakeTable(crc64.ECMA)
 
-// Fact is an interface of a fact that may be passed to a qualifier. Each fact must implement
-// a Get(string) method which receives the attribute name and must return either a string or
-// an int slice, depending on the attribute definition.
-type Fact interface {
-	Get(string) interface{}
+type crcHash struct {
+	prefix  byte
+	factors uint64Slice
+}
+
+func newCRCHash(prefix byte, capacity int) *crcHash {
+	return &crcHash{prefix, make(uint64Slice, 0, capacity)}
+}
+
+func (h *crcHash) Add(factor uint64) { h.factors = append(h.factors, factor) }
+
+func (h *crcHash) Sum64() uint64 {
+	sort.Sort(h.factors)
+
+	data := make([]byte, len(h.factors)*8+1)
+	data[0] = h.prefix
+	for i, factor := range h.factors {
+		binary.LittleEndian.PutUint64(data[i*8+1:], factor)
+	}
+	return crc64.Checksum(data, crcTable)
 }
 
 // --------------------------------------------------------------------
 
-type AttrType uint8
+type uint64Slice []uint64
 
-const (
-	TypeUnknown AttrType = iota
-	TypeStringSlice
-	TypeIntSlice
-)
+func (p uint64Slice) Len() int           { return len(p) }
+func (p uint64Slice) Less(i, j int) bool { return p[i] < p[j] }
+func (p uint64Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 // --------------------------------------------------------------------
-
-// RuleDef contains a JSON-parseable rule definition
-type RuleDef struct {
-	Attr string      // the attribute name
-	Op   string      // the operation code, either '+' or '-'
-	Vals interface{} // the rule values, can be either an array of strings or ints
-}
-
-// UnmarshalJSON decodes JSON
-func (r *RuleDef) UnmarshalJSON(data []byte) error {
-	var temp *ruleDef
-	err := json.Unmarshal(data, &temp)
-	if err != nil {
-		return err
-	}
-
-	rdef := RuleDef{Attr: temp.Attr, Op: temp.Op, Vals: nil}
-	if rdef.Vals, err = temp.DecodeVals(); err != nil {
-		return err
-	}
-
-	*r = rdef
-	_, err = r.DetectType()
-	return err
-}
-
-// DetectType attempts to detect the type of the values
-func (r *RuleDef) DetectType() (AttrType, error) {
-	switch r.Vals.(type) {
-	case []string, string:
-		return TypeStringSlice, nil
-	case []int, int:
-		return TypeIntSlice, nil
-	}
-	return TypeUnknown, r.invalid()
-}
-
-func (r *RuleDef) invalid() error {
-	return fmt.Errorf("qfy: invalid rule: %s %s%v", r.Attr, r.Op, r.Vals)
-}
-
-func (r *RuleDef) toRule(dict strDict) (Rule, error) {
-	var vals []int
-
-	switch vv := r.Vals.(type) {
-	case []string:
-		vals = dict.FetchSlice(vv...)
-	case []int:
-		vals = vv
-	case string:
-		vals = dict.FetchSlice(vv)
-	case int:
-		vals = []int{vv}
-	}
-
-	if len(vals) == 0 {
-		return nil, r.invalid()
-	}
-
-	switch r.Op {
-	case "+":
-		return newPlusRule(vals), nil
-	case "-":
-		return newMinusRule(vals), nil
-	}
-	return nil, r.invalid()
-}
-
-// --------------------------------------------------------------------
-
-type ruleDef struct {
-	Attr string          `json:"attr"`
-	Op   string          `json:"op"`
-	Vals json.RawMessage `json:"values"`
-}
-
-func (r *ruleDef) DecodeVals() (interface{}, error) {
-	raw := r.Vals
-	if len(raw) == 0 {
-		return nil, nil
-	}
-
-	switch raw[0] {
-	case '[': // slice
-		for _, c := range raw[1:] {
-
-			switch c {
-			case '"': // string slice
-				var vals []string
-				err := json.Unmarshal(raw, &vals)
-				return vals, err
-			case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9': // int slice
-				var vals []int
-				err := json.Unmarshal(raw, &vals)
-				return vals, err
-			}
-		}
-	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9': // int
-		var val int
-		err := json.Unmarshal(raw, &val)
-		return val, err
-	case '"': // string
-		var val string
-		err := json.Unmarshal(raw, &val)
-		return val, err
-	}
-	return nil, nil
-}
-
-// --------------------------------------------------------------------
-
-type converter interface {
-	convert(interface{}) *intset.Set
-}
 
 // the qualification lookup process abstraction
 type lookup struct {
 	results   []int
-	converter converter
 	ruleCache map[uint64]bool
 	factCache map[string]*intset.Set
 }
 
-func newLookup(cvt converter) *lookup {
+func newLookup() *lookup {
 	return &lookup{
 		results:   make([]int, 0, 100),
-		converter: cvt,
 		ruleCache: make(map[uint64]bool, 1000),
 		factCache: make(map[string]*intset.Set, 20),
 	}

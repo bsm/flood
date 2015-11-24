@@ -5,29 +5,57 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("strDict", func() {
-	var subject strDict
+var _ = Describe("Dict", func() {
+	var subject Dict
 
 	BeforeEach(func() {
-		subject = strDict{}
+		subject = NewDict()
 	})
 
-	It("should fetch items", func() {
-		Expect(subject.Fetch("a")).To(Equal(1))
-		Expect(subject.Fetch("b")).To(Equal(2))
-		Expect(subject.Fetch("c")).To(Equal(3))
-		Expect(subject.Fetch("b")).To(Equal(2))
-		Expect(subject.Fetch("a")).To(Equal(1))
-		Expect(subject).To(Equal(strDict{"a": 1, "b": 2, "c": 3}))
+	It("should find or create items", func() {
+		Expect(subject.Add("a")).To(Equal(1))
+		Expect(subject.Add("b")).To(Equal(2))
+		Expect(subject.Add("c")).To(Equal(3))
+		Expect(subject.Add("b")).To(Equal(2))
+		Expect(subject.Add("a")).To(Equal(1))
+		Expect(subject).To(Equal(Dict{"a": 1, "b": 2, "c": 3}))
 	})
 
-	It("should fetch slices", func() {
-		Expect(subject.FetchSlice("a", "b")).To(Equal([]int{1, 2}))
-		Expect(subject.FetchSlice("c", "b")).To(Equal([]int{3, 2}))
+	It("should add slices", func() {
+		Expect(subject.AddSlice("a", "b")).To(Equal([]int{1, 2}))
+		Expect(subject.AddSlice("c", "b")).To(Equal([]int{3, 2}))
 	})
 
 	It("should get slices", func() {
-		Expect(subject.FetchSlice("a", "b")).To(Equal([]int{1, 2}))
+		Expect(subject.AddSlice("a", "b")).To(Equal([]int{1, 2}))
+		Expect(subject.GetSlice("c", "b", "d", "a")).To(Equal([]int{2, 1}))
+	})
+
+})
+
+var _ = Describe("ConcurrentDict", func() {
+	var subject *ConcurrentDict
+
+	BeforeEach(func() {
+		subject = NewConcurrentDict()
+	})
+
+	It("should find or create items", func() {
+		Expect(subject.Add("a")).To(Equal(1))
+		Expect(subject.Add("b")).To(Equal(2))
+		Expect(subject.Add("c")).To(Equal(3))
+		Expect(subject.Add("b")).To(Equal(2))
+		Expect(subject.Add("a")).To(Equal(1))
+		Expect(subject.dict).To(Equal(Dict{"a": 1, "b": 2, "c": 3}))
+	})
+
+	It("should add slices", func() {
+		Expect(subject.AddSlice("a", "b")).To(Equal([]int{1, 2}))
+		Expect(subject.AddSlice("c", "b")).To(Equal([]int{3, 2}))
+	})
+
+	It("should get slices", func() {
+		Expect(subject.AddSlice("a", "b")).To(Equal([]int{1, 2}))
 		Expect(subject.GetSlice("c", "b", "d", "a")).To(Equal([]int{2, 1}))
 	})
 

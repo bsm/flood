@@ -6,54 +6,44 @@ import (
 
 	"github.com/bsm/intset"
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Qualifier", func() {
 	var subject *Qualifier
+	var dict Dict
 
 	BeforeEach(func() {
+		dict = NewDict()
 		subject = New([]string{"unused", "country", "browser", "domains"})
 
-		err := subject.Feed(91, []RuleDef{
-			{Attr: "country", Op: "+", Vals: []string{"US"}},
-			{Attr: "browser", Op: "-", Vals: []string{"IE"}},
-			{Attr: "domains", Op: "+", Vals: []string{"a.com", "b.com"}},
-			{Attr: "domains", Op: "-", Vals: []string{"c.com"}},
+		subject.Feed(91, map[string]Rule{
+			"country": OneOf(dict.AddSlice("US")),
+			"browser": NeitherOf(dict.AddSlice("IE")),
+			"domains": All(
+				OneOf(dict.AddSlice("a.com", "b.com")),
+				NeitherOf(dict.AddSlice("c.com")),
+			),
 		})
-		Expect(err).NotTo(HaveOccurred())
 
-		err = subject.Feed(92, []RuleDef{
-			{Attr: "country", Op: "-", Vals: []string{"CA"}},
-			{Attr: "domains", Op: "+", Vals: []string{"b.com", "c.com"}},
-			{Attr: "domains", Op: "+", Vals: []string{"d.com", "a.com"}},
+		subject.Feed(92, map[string]Rule{
+			"country": NeitherOf(dict.AddSlice("CA")),
+			"domains": All(
+				OneOf(dict.AddSlice("b.com", "c.com")),
+				OneOf(dict.AddSlice("d.com", "a.com")),
+			),
 		})
-		Expect(err).NotTo(HaveOccurred())
 
-		err = subject.Feed(93, []RuleDef{
-			{Attr: "country", Op: "+", Vals: []string{"US"}},
-			{Attr: "browser", Op: "-", Vals: []string{"OP"}},
+		subject.Feed(93, map[string]Rule{
+			"country": OneOf(dict.AddSlice("US")),
+			"browser": NeitherOf(dict.AddSlice("OP")),
 		})
-		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("should feed with data", func() {
 		Expect(subject.root.children).To(HaveLen(1))
 		Expect(subject.root.children[0].(*passNode).children).To(HaveLen(2))
-	})
-
-	It("should reject bad feed inputs", func() {
-		Expect(subject.Feed(96, []RuleDef{
-			{Attr: "country", Op: "*", Vals: []string{"US"}},
-		})).To(HaveOccurred())
-
-		Expect(subject.Feed(96, []RuleDef{
-			{Attr: "country", Op: "+", Vals: map[string]int{"a": 1}},
-		})).To(HaveOccurred())
-
-		Expect(subject.Feed(96, []RuleDef{
-			{Attr: "country", Op: "-", Vals: []string{}},
-		})).To(HaveOccurred())
 	})
 
 	It("should graph", func() {
@@ -62,25 +52,27 @@ var _ = Describe("Qualifier", func() {
 		Expect(w.String()).To(ContainSubstring("\tN0000000000000000 [label = \"[root]\"]\n"))
 	})
 
-	It("should match", func() {
-		tests := []struct {
-			fact Fact
-			vals []int
-		}{
-			{&mockFactStruct{}, []int{}},
-			{&mockFactStruct{Country: []string{"US"}}, []int{93}},
-			{&mockFactStruct{Country: []string{"US"}, Domains: []string{"a.com", "d.com"}}, []int{91, 93}},
-			{&mockFactStruct{Country: []string{"US"}, Domains: []string{"a.com", "c.com", "d.com"}}, []int{92, 93}},
-			{&mockFactStruct{Country: []string{"CA"}, Domains: []string{"a.com", "c.com", "d.com"}}, []int{}},
-			{&mockFactStruct{Domains: []string{"a.com", "c.com", "d.com"}}, []int{92}},
-			{&mockFactStruct{Country: []string{"US"}, Browser: []string{"OP"}, Domains: []string{"b.com", "x.com"}}, []int{91}},
-		}
+	DescribeTable("matching",
+		func(fact *mockFactStruct, expected []int) {
+			fact.D = dict // assign dict
+			Expect(subject.Select(fact)).To(ConsistOf(expected))
+		},
 
-		for _, test := range tests {
-			res := subject.Select(test.fact)
-			Expect(res).To(ConsistOf(test.vals), "for %+v", test.fact)
-		}
-	})
+		Entry("blank",
+			&mockFactStruct{}, []int{}),
+		Entry("91 & 92 have domain inclusions, 93 matches",
+			&mockFactStruct{Country: "US"}, []int{93}),
+		Entry("91 & 93 match, 92 has only one matching domain rule",
+			&mockFactStruct{Country: "US", Domains: []string{"a.com", "d.com"}}, []int{91, 93}),
+		Entry("92 & 93 match, 91 excludes c.com",
+			&mockFactStruct{Country: "US", Domains: []string{"a.com", "c.com", "d.com"}}, []int{92, 93}),
+		Entry("91 & 93 require US, 92 excludes CA",
+			&mockFactStruct{Country: "CA", Domains: []string{"a.com", "c.com", "d.com"}}, []int{}),
+		Entry("91 & 93 have explicit country inclusions, 92 matches",
+			&mockFactStruct{Domains: []string{"a.com", "c.com", "d.com"}}, []int{92}),
+		Entry("92 requires more domains, 93 excludes OP, 91 matches",
+			&mockFactStruct{Country: "US", Browser: "OP", Domains: []string{"b.com", "x.com"}}, []int{91}),
+	)
 
 })
 
@@ -91,26 +83,30 @@ func TestSuite(t *testing.T) {
 	RunSpecs(t, "flood/qfy")
 }
 
-type mockConverter struct{}
-
-func (mockConverter) convert(v interface{}) *intset.Set {
-	return intset.Use(v.([]int)...)
-}
-
 type mockFact map[string][]int
 
-func (m mockFact) Get(attr string) interface{} { return m[attr] }
+func (m mockFact) Get(attr string) *intset.Set {
+	if vv, ok := m[attr]; ok {
+		return intset.Use(vv...)
+	}
+	return nil
+}
 
-type mockFactStruct struct{ Country, Browser, Domains []string }
+type mockFactStruct struct {
+	D Dict
 
-func (m mockFactStruct) Get(attr string) interface{} {
+	Country, Browser string
+	Domains          []string
+}
+
+func (m *mockFactStruct) Get(attr string) *intset.Set {
 	switch attr {
 	case "country":
-		return m.Country
+		return intset.Use(m.D.GetSlice(m.Country)...)
 	case "browser":
-		return m.Browser
+		return intset.Use(m.D.GetSlice(m.Browser)...)
 	case "domains":
-		return m.Domains
+		return intset.Use(m.D.GetSlice(m.Domains...)...)
 	}
 	return nil
 }

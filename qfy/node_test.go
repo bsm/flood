@@ -39,7 +39,7 @@ var _ = Describe("baseNode", func() {
 
 	It("should walk", func() {
 		subject.Merge(valueNode{1, 2, 3})
-		acc := newLookup(mockConverter{})
+		acc := newLookup()
 		subject.Walk(nil, acc)
 		Expect(acc.results).To(HaveLen(3))
 	})
@@ -51,50 +51,34 @@ var _ = Describe("clauseNode", func() {
 	var _ node = subject
 
 	BeforeEach(func() {
-		subject = newClauseNode("x", RuleSet{
-			newPlusRule([]int{1, 2}),
-			newPlusRule([]int{3, 4}),
-		})
+		subject = newClauseNode("x", All(
+			OneOf([]int{1, 2}),
+			OneOf([]int{3, 4}),
+		))
 		subject.Merge(valueNode{8})
 	})
 
-	It("should return a UID", func() {
-		other := newClauseNode("x", RuleSet{
-			newPlusRule([]int{4, 3}),
-			newPlusRule([]int{2, 1}),
-		})
-		Expect(subject.UID()).To(Equal(uint64(3467153918117851366)))
-		Expect(other.UID()).To(Equal(uint64(3467153918117851366)))
-	})
-
-	It("should walk when empty", func() {
-		subject.rules = nil
-		acc := newLookup(mockConverter{})
-		subject.Walk(mockFact{}, acc)
-		Expect(acc.results).To(HaveLen(1))
-	})
-
 	It("should skip when no match", func() {
-		acc := newLookup(mockConverter{})
+		acc := newLookup()
 		subject.Walk(mockFact{"y": {53, 54, 55}}, acc)
 		subject.Walk(mockFact{"x": {53, 54, 55}}, acc)
 		Expect(acc.results).To(BeEmpty())
 	})
 
 	It("should skip when partial match", func() {
-		acc := newLookup(mockConverter{})
+		acc := newLookup()
 		subject.Walk(mockFact{"x": {1, 2, 55}}, acc)
 		Expect(acc.results).To(BeEmpty())
 	})
 
 	It("should cache rules", func() {
-		acc := newLookup(mockConverter{})
+		acc := newLookup()
 		subject.Walk(mockFact{"x": {1, 3}}, acc)
-		Expect(acc.ruleCache).To(HaveLen(2))
+		Expect(acc.ruleCache).To(HaveLen(1))
 	})
 
 	It("should cache fact values", func() {
-		acc := newLookup(mockConverter{})
+		acc := newLookup()
 		subject.Walk(mockFact{"x": {1, 3}}, acc)
 		Expect(acc.factCache).To(HaveLen(1))
 		Expect(acc.factCache).To(HaveKey("x"))
@@ -102,7 +86,7 @@ var _ = Describe("clauseNode", func() {
 	})
 
 	It("should walk when full match", func() {
-		acc := newLookup(mockConverter{})
+		acc := newLookup()
 		subject.Walk(mockFact{"x": {1, 3}}, acc)
 		Expect(acc.results).To(HaveLen(1))
 		subject.Walk(mockFact{"x": {2, 3}}, acc)
@@ -122,7 +106,7 @@ var _ = Describe("valueNode", func() {
 	})
 
 	It("should walk", func() {
-		acc := newLookup(mockConverter{})
+		acc := newLookup()
 		valueNode{1, 2, 3}.Walk(nil, acc)
 		Expect(acc.results).To(HaveLen(3))
 	})

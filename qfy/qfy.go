@@ -8,70 +8,66 @@ import (
 	"github.com/bsm/intset"
 )
 
+// Fact is an interface of a fact that may be passed to a qualifier. Each fact must implement
+// a Get(string) method which receives the attribute name and must return either a string or
+// an int slice, depending on the attribute definition.
+type Fact interface {
+	Get(string) *intset.Set
+}
+
+// --------------------------------------------------------------------
+
 // Qualifier represents a rule engine that can match a fact against a
 // list of rule-sets using a fixed set of attributes
+//
+// Example setup:
+//
+// q := qfy.New([]string{"country", "months"})
+// q.Feed(11, map[string]Rule{
+//   "country": qfy.Include(q, []string{"GB"}),
+//   "months":  qfy.Include(q, []int{2015, 2014}),
+// })
+// q.Feed(12, map[string]Rule{
+//   "country": qfy.Exclude(q, []string{"US"}),
+//   "months":  qfy.And(qfy.Between(2010, 2015), qfy.Exclude(q, []int{2012})),
+// })
 type Qualifier struct {
 	attrs []string
 	root  *rootNode
-	dict  strDict
-
-	cache *sync.Pool
+	cache sync.Pool
 }
 
 // New creates a new qualifier with a list of known/qualifiable attributes
 func New(attrs []string) *Qualifier {
-	q := &Qualifier{
-		attrs: attrs,
-		root:  &rootNode{},
-		dict:  make(strDict, 100),
-	}
-	q.cache = &sync.Pool{New: func() interface{} {
-		return newLookup(q)
-	}}
-	return q
+	return &Qualifier{attrs: attrs, root: &rootNode{}}
 }
 
-// Feed registers a new identifier with its associated rule-set
-func (q *Qualifier) Feed(id int, ruleSet []RuleDef) error {
+// Feed registers a new targetID with a set of rules by attribute name.
+func (q *Qualifier) Feed(targetID int, rules map[string]Rule) {
 	var parent node = q.root
 	var child node
 
 	for _, attr := range q.attrs {
-		var rules RuleSet
-
-		for _, rdef := range ruleSet {
-			if rdef.Attr == attr {
-				rule, err := rdef.toRule(q.dict)
-				if err != nil {
-					return err
-				}
-				rules = append(rules, rule)
-			}
-		}
-
-		if len(rules) == 0 {
-			child = &passNode{}
+		if rule, ok := rules[attr]; ok {
+			child = newClauseNode(attr, rule)
 		} else {
-			child = newClauseNode(attr, rules)
+			child = &passNode{}
 		}
 		parent = parent.Merge(child)
 	}
-	parent.Merge(valueNode{id})
-	return nil
+	parent.Merge(valueNode{targetID})
 }
 
 // Select performs the qualification and matches all known rules against a given fact
 // returning a list of associated identifiers
 func (q *Qualifier) Select(fact Fact) []int {
-	acc := q.cache.Get().(*lookup)
+	acc := q.makeLookup()
 	q.root.Walk(fact, acc)
 
 	nums := make([]int, len(acc.results))
 	copy(nums, acc.results)
 
-	acc.Clear()
 	q.cache.Put(acc)
-
 	return nums
 }
 
@@ -82,12 +78,11 @@ func (q *Qualifier) Graph(w io.Writer) {
 	fmt.Fprintf(w, "}\n")
 }
 
-func (q *Qualifier) convert(vals interface{}) *intset.Set {
-	switch vv := vals.(type) {
-	case []string:
-		return intset.Use(q.dict.GetSlice(vv...)...)
-	case []int:
-		return intset.Use(vv...)
+func (q *Qualifier) makeLookup() *lookup {
+	if c := q.cache.Get(); c != nil {
+		lp := c.(*lookup)
+		lp.Clear()
+		return lp
 	}
-	return nil
+	return newLookup()
 }
