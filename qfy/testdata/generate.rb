@@ -34,8 +34,12 @@ File.open(File.expand_path("../facts.json", __FILE__), "w") do |file|
   10000.times do |_|
     fact = {}
     attrs.each do |name, values|
-      vals = values.sample(SRC_RANDOM.rand(MAX_VALUES[name])+1)
-      fact[name] = vals.is_a?(Array) ? vals : [vals]
+      vals = if MAX_VALUES[name] == 1
+        values.sample
+      else
+        values.sample(SRC_RANDOM.rand(MAX_VALUES[name])+1)
+      end
+      fact[name] = vals
     end
     file.puts JSON.dump(fact)
   end
