@@ -108,11 +108,17 @@ func (n *clauseNode) Walk(fact Fact, acc *lookup) {
 		acc.factCache[n.attr] = vals
 	}
 
+	ruleCache, ok := acc.ruleCache[n.attr]
+	if !ok {
+		ruleCache = make(map[uint64]bool, 100)
+		acc.ruleCache[n.attr] = ruleCache
+	}
+
 	ruleID := n.rule.UID()
-	match, ok := acc.ruleCache[ruleID]
+	match, ok := ruleCache[ruleID]
 	if !ok {
 		match = n.rule.Match(vals)
-		acc.ruleCache[ruleID] = match
+		ruleCache[ruleID] = match
 	}
 
 	if !match {

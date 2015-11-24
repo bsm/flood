@@ -71,10 +71,12 @@ var _ = Describe("clauseNode", func() {
 		Expect(acc.results).To(BeEmpty())
 	})
 
-	It("should cache rules", func() {
+	It("should cache rule evaluation results by attribute", func() {
 		acc := newLookup()
 		subject.Walk(mockFact{"x": {1, 3}}, acc)
-		Expect(acc.ruleCache).To(HaveLen(1))
+		Expect(acc.ruleCache).To(Equal(map[string]map[uint64]bool{
+			"x": {6782941319161752266: true},
+		}))
 	})
 
 	It("should cache fact values", func() {
