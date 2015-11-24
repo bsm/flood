@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/bsm/intset"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -85,11 +84,9 @@ func TestSuite(t *testing.T) {
 
 type mockFact map[string][]int
 
-func (m mockFact) Get(attr string) *intset.Set {
-	if vv, ok := m[attr]; ok {
-		return intset.Use(vv...)
-	}
-	return nil
+func (m mockFact) GetQualifiable(attr string) []int {
+	vv, _ := m[attr]
+	return vv
 }
 
 type mockFactStruct struct {
@@ -99,14 +96,14 @@ type mockFactStruct struct {
 	Domains          []string
 }
 
-func (m *mockFactStruct) Get(attr string) *intset.Set {
+func (m *mockFactStruct) GetQualifiable(attr string) []int {
 	switch attr {
 	case "country":
-		return intset.Use(m.D.GetSlice(m.Country)...)
+		return m.D.GetSlice(m.Country)
 	case "browser":
-		return intset.Use(m.D.GetSlice(m.Browser)...)
+		return m.D.GetSlice(m.Browser)
 	case "domains":
-		return intset.Use(m.D.GetSlice(m.Domains...)...)
+		return m.D.GetSlice(m.Domains...)
 	}
 	return nil
 }

@@ -4,15 +4,13 @@ import (
 	"fmt"
 	"io"
 	"sync"
-
-	"github.com/bsm/intset"
 )
 
 // Fact is an interface of a fact that may be passed to a qualifier. Each fact must implement
 // a Get(string) method which receives the attribute name and must return either a string or
 // an int slice, depending on the attribute definition.
 type Fact interface {
-	Get(string) *intset.Set
+	GetQualifiable(string) []int
 }
 
 // --------------------------------------------------------------------

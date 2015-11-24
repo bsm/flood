@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+
+	"github.com/bsm/intset"
 )
 
 type node interface {
@@ -102,7 +104,7 @@ func newClauseNode(attr string, rule Rule) *clauseNode {
 func (n *clauseNode) Walk(fact Fact, acc *lookup) {
 	vals, ok := acc.factCache[n.attr]
 	if !ok {
-		vals = fact.Get(n.attr)
+		vals = intset.Use(fact.GetQualifiable(n.attr)...)
 		acc.factCache[n.attr] = vals
 	}
 
