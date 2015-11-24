@@ -39,7 +39,7 @@ var _ = Describe("Exclusion", func() {
 	var _ Rule = subject
 
 	BeforeEach(func() {
-		subject = NeitherOf([]int{3, 2, 1})
+		subject = NoneOf([]int{3, 2, 1})
 	})
 
 	It("should return a string", func() {
@@ -48,8 +48,8 @@ var _ = Describe("Exclusion", func() {
 
 	It("should have an ID", func() {
 		Expect(subject.UID()).To(Equal(uint64(17194010691906675252)))
-		Expect(NeitherOf([]int{2, 3, 1}).UID()).To(Equal(uint64(17194010691906675252)))
-		Expect(NeitherOf([]int{7, 8, 9}).UID()).To(Equal(uint64(5101638233538279743)))
+		Expect(NoneOf([]int{2, 3, 1}).UID()).To(Equal(uint64(17194010691906675252)))
+		Expect(NoneOf([]int{7, 8, 9}).UID()).To(Equal(uint64(5101638233538279743)))
 	})
 
 	It("should check exclusion", func() {

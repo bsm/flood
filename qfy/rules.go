@@ -26,8 +26,8 @@ func (r *Inclusion) String() string { return fmt.Sprintf("+%v", r.vals.Slice()) 
 // Exclusion rules require none of the values to be present in the fact
 type Exclusion struct{ baseRule }
 
-// NeitherOf constructs an Exclusion
-func NeitherOf(vals []int) *Exclusion { return &Exclusion{*newBaseRule('-', vals)} }
+// NoneOf constructs an Exclusion
+func NoneOf(vals []int) *Exclusion { return &Exclusion{*newBaseRule('-', vals)} }
 
 // Match tests if the rule is qualified
 func (r *Exclusion) Match(vv *intset.Set) bool { return !(vv != nil && r.vals.Intersects(vv)) }

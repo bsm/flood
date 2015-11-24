@@ -20,15 +20,15 @@ var _ = Describe("Qualifier", func() {
 
 		subject.Feed(91, map[string]Rule{
 			"country": OneOf(dict.AddSlice("US")),
-			"browser": NeitherOf(dict.AddSlice("IE")),
+			"browser": NoneOf(dict.AddSlice("IE")),
 			"domains": All(
 				OneOf(dict.AddSlice("a.com", "b.com")),
-				NeitherOf(dict.AddSlice("c.com")),
+				NoneOf(dict.AddSlice("c.com")),
 			),
 		})
 
 		subject.Feed(92, map[string]Rule{
-			"country": NeitherOf(dict.AddSlice("CA")),
+			"country": NoneOf(dict.AddSlice("CA")),
 			"domains": All(
 				OneOf(dict.AddSlice("b.com", "c.com")),
 				OneOf(dict.AddSlice("d.com", "a.com")),
@@ -37,7 +37,7 @@ var _ = Describe("Qualifier", func() {
 
 		subject.Feed(93, map[string]Rule{
 			"country": OneOf(dict.AddSlice("US")),
-			"browser": NeitherOf(dict.AddSlice("OP")),
+			"browser": NoneOf(dict.AddSlice("OP")),
 		})
 	})
 
