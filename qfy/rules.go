@@ -3,8 +3,6 @@ package qfy
 import (
 	"fmt"
 	"strings"
-
-	"github.com/bsm/intset"
 )
 
 // Rule is an abstract logic evaluation
@@ -61,13 +59,59 @@ func (r *factCheck) perform(fact Fact, state *State) bool {
 		return match
 	}
 
-	vals, ok := state.facts[r.key]
+	v, ok := state.facts[r.key]
 	if !ok {
-		vals = intset.Use(fact.GetQualifiable(r.key)...)
-		state.facts[r.key] = vals
+		switch vv := fact.GetQualifiable(r.key).(type) {
+		case int:
+			v = int64(vv)
+		case int8:
+			v = int64(vv)
+		case int16:
+			v = int64(vv)
+		case int32:
+			v = int64(vv)
+		case int64:
+			v = vv
+		case uint:
+			v = int64(vv)
+		case uint8:
+			v = int64(vv)
+		case uint16:
+			v = int64(vv)
+		case uint32:
+			v = int64(vv)
+		case uint64:
+			v = int64(vv)
+		case float64:
+			v = vv
+		case []int:
+			v = ints64FromInts(vv)
+		case []int8:
+			v = ints64FromInts8(vv)
+		case []int16:
+			v = ints64FromInts16(vv)
+		case []int32:
+			v = ints64FromInts32(vv)
+		case []int64:
+			v = SortInts64(vv...)
+		case []uint:
+			v = ints64FromUints(vv)
+		case []uint8:
+			v = ints64FromUints8(vv)
+		case []uint16:
+			v = ints64FromUints16(vv)
+		case []uint32:
+			v = ints64FromUints32(vv)
+		case []uint64:
+			v = ints64FromUints64(vv)
+		default:
+			state.rules[r.hash] = false
+			return false
+		}
+		state.facts[r.key] = v
 	}
 
-	match := r.cond.Match(vals)
+	match := r.cond.Match(v)
 	state.rules[r.hash] = match
 	return match
 }

@@ -77,14 +77,14 @@ type benchFact struct {
 	Rcat   []int    `json:"rcat,omitempty"`
 }
 
-func (bf *benchFact) GetQualifiable(key FactKey) []int {
+func (bf *benchFact) GetQualifiable(key FactKey) interface{} {
 	field := reflect.ValueOf(bf).Elem().Field(int(key))
 
 	switch field.Kind() {
 	case reflect.String:
-		return benchDict.GetSlice(field.String())
+		return benchDict.Get(field.String())
 	case reflect.Int:
-		return []int{int(field.Int())}
+		return int64(field.Int())
 	case reflect.Slice:
 		switch field.Type() {
 		case benchStringSliceType:
@@ -100,7 +100,7 @@ func (bf *benchFact) GetQualifiable(key FactKey) []int {
 
 type benchTargetValues []json.Number
 
-func (s benchTargetValues) Vals() []int {
+func (s benchTargetValues) Vals() []int64 {
 	vals, err := s.Ints()
 	if err != nil {
 		vals = benchDict.AddSlice(s.Strings()...)
@@ -116,14 +116,14 @@ func (s benchTargetValues) Strings() []string {
 	return res
 }
 
-func (s benchTargetValues) Ints() ([]int, error) {
-	res := make([]int, len(s))
+func (s benchTargetValues) Ints() ([]int64, error) {
+	res := make([]int64, len(s))
 	for i, n := range s {
 		num, err := n.Int64()
 		if err != nil {
 			return nil, err
 		}
-		res[i] = int(num)
+		res[i] = num
 	}
 	return res, nil
 }
@@ -154,7 +154,7 @@ func (bh *benchHelper) parseQualifier() error {
 	defer file.Close()
 
 	var targeting []struct {
-		ID    int
+		ID    int64
 		Rules []struct {
 			Attr, Op string
 			Values   benchTargetValues
@@ -171,10 +171,11 @@ func (bh *benchHelper) parseQualifier() error {
 			key := benchFactKeyMap[rdef.Attr]
 			vals := rdef.Values.Vals()
 
-			if rdef.Op == "-" {
-				rules = append(rules, key.MustBe(NoneOf(vals)))
-			} else {
+			switch rdef.Op {
+			case "+":
 				rules = append(rules, key.MustBe(OneOf(vals)))
+			case "-":
+				rules = append(rules, key.MustBe(NoneOf(vals)))
 			}
 		}
 		bh.q.Resolve(All(rules...), target.ID)

@@ -2,6 +2,7 @@ package qfy
 
 import (
 	"encoding/binary"
+	"encoding/gob"
 	"hash/crc64"
 	"sort"
 )
@@ -38,19 +39,12 @@ func (h *CRC64) Sum64() uint64 {
 
 // --------------------------------------------------------------------
 
-type uint64Slice []uint64
+func crc64FromValue(sign byte, v interface{}) uint64 {
+	sub := crc64.New(crcTable)
+	gob.NewEncoder(sub).Encode(v)
 
-func (p uint64Slice) Len() int           { return len(p) }
-func (p uint64Slice) Less(i, j int) bool { return p[i] < p[j] }
-func (p uint64Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
-
-// --------------------------------------------------------------------
-
-func crc64FromInts(sign byte, nums []int) uint64 {
-	hash := NewCRC64(sign, len(nums))
-	for _, n := range nums {
-		hash.Add(uint64(n))
-	}
+	hash := NewCRC64(sign, 1)
+	hash.Add(sub.Sum64())
 	return hash.Sum64()
 }
 

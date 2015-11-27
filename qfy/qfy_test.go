@@ -17,14 +17,14 @@ var _ = Describe("Qualifier", func() {
 		subject = New()
 
 		subject.Resolve(All(
-			mockFactCountry.MustBe(OneOf(dict.AddSlice("US"))),
-			mockFactBrowser.MustBe(NoneOf(dict.AddSlice("IE"))),
+			mockFactCountry.MustBe(EqualTo(dict.Add("US"))),
+			mockFactBrowser.MustNotBe(EqualTo(dict.Add("IE"))),
 			mockFactDomains.MustInclude(OneOf(dict.AddSlice("a.com", "b.com"))),
 			mockFactDomains.MustInclude(NoneOf(dict.AddSlice("c.com"))),
 		), 91)
 
 		subject.Resolve(All(
-			mockFactCountry.MustBe(NoneOf(dict.AddSlice("CA"))),
+			mockFactCountry.MustNotBe(EqualTo(dict.Add("CA"))),
 			mockFactDomains.MustInclude(OneOf(dict.AddSlice("b.com", "c.com"))),
 			mockFactDomains.MustInclude(OneOf(dict.AddSlice("d.com", "a.com"))),
 		), 92)
@@ -40,25 +40,25 @@ var _ = Describe("Qualifier", func() {
 	})
 
 	DescribeTable("matching",
-		func(fact *mockFactStruct, expected []int) {
+		func(fact *mockFactStruct, expected []int64) {
 			fact.D = dict // assign dict
 			Expect(subject.Select(fact)).To(ConsistOf(expected))
 		},
 
 		Entry("blank",
-			&mockFactStruct{}, []int{}),
+			&mockFactStruct{}, []int64{}),
 		Entry("91 & 92 have domain inclusions, 93 matches",
-			&mockFactStruct{Country: "US"}, []int{93}),
+			&mockFactStruct{Country: "US"}, []int64{93}),
 		Entry("91 & 93 match, 92 has only one matching domain rule",
-			&mockFactStruct{Country: "US", Domains: []string{"a.com", "d.com"}}, []int{91, 93}),
+			&mockFactStruct{Country: "US", Domains: []string{"a.com", "d.com"}}, []int64{91, 93}),
 		Entry("92 & 93 match, 91 excludes c.com",
-			&mockFactStruct{Country: "US", Domains: []string{"a.com", "c.com", "d.com"}}, []int{92, 93}),
+			&mockFactStruct{Country: "US", Domains: []string{"a.com", "c.com", "d.com"}}, []int64{92, 93}),
 		Entry("91 & 93 require US, 92 excludes CA",
-			&mockFactStruct{Country: "CA", Domains: []string{"a.com", "c.com", "d.com"}}, []int{}),
+			&mockFactStruct{Country: "CA", Domains: []string{"a.com", "c.com", "d.com"}}, []int64{}),
 		Entry("91 & 93 have explicit country inclusions, 92 matches",
-			&mockFactStruct{Domains: []string{"a.com", "c.com", "d.com"}}, []int{92}),
+			&mockFactStruct{Domains: []string{"a.com", "c.com", "d.com"}}, []int64{92}),
 		Entry("92 requires more domains, 93 excludes OP, 91 matches",
-			&mockFactStruct{Country: "US", Browser: "OP", Domains: []string{"b.com", "x.com"}}, []int{91}),
+			&mockFactStruct{Country: "US", Browser: "OP", Domains: []string{"b.com", "x.com"}}, []int64{91}),
 	)
 
 })
@@ -78,9 +78,9 @@ const (
 	mockFactDomains
 )
 
-type mockFact map[FactKey][]int
+type mockFact map[FactKey][]int64
 
-func (m mockFact) GetQualifiable(key FactKey) []int {
+func (m mockFact) GetQualifiable(key FactKey) interface{} {
 	vv, _ := m[key]
 	return vv
 }
@@ -92,12 +92,12 @@ type mockFactStruct struct {
 	Domains          []string
 }
 
-func (m *mockFactStruct) GetQualifiable(key FactKey) []int {
+func (m *mockFactStruct) GetQualifiable(key FactKey) interface{} {
 	switch key {
 	case mockFactCountry:
-		return m.D.GetSlice(m.Country)
+		return m.D.Get(m.Country)
 	case mockFactBrowser:
-		return m.D.GetSlice(m.Browser)
+		return m.D.Get(m.Browser)
 	case mockFactDomains:
 		return m.D.GetSlice(m.Domains...)
 	}

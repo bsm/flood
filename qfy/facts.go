@@ -1,10 +1,10 @@
 package qfy
 
 // Fact is an interface of a fact that may be passed to a qualifier. Each fact must implement
-// a Get(string) method which receives the attribute name and must return either a string or
-// an int slice, depending on the attribute definition.
+// a GetQualifiable(FatKey) method which receives a key and must return either a bool, an int64
+// a float64 or an []int64 slice.
 type Fact interface {
-	GetQualifiable(FactKey) []int
+	GetQualifiable(FactKey) interface{}
 }
 
 // FactKey is a unique identifier of any fact attribute
@@ -24,3 +24,6 @@ func (k FactKey) MustBe(cond Condition) Rule { return CheckFact(k, cond) }
 
 // MustInclude is an alias for MustBe
 func (k FactKey) MustInclude(cond Condition) Rule { return k.MustBe(cond) }
+
+// MustNotBe is the equivalent of MustBe(Not(...))
+func (k FactKey) MustNotBe(cond Condition) Rule { return k.MustBe(Not(cond)) }

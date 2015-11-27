@@ -21,4 +21,21 @@ var _ = Describe("CRC64", func() {
 		Entry("nil", byte('+'), ([]uint64)(nil), uint64(6093685733581172889)),
 	)
 
+	It("should build CRC64s from any value", func() {
+		Expect(crc64FromValue('x', 1.23)).To(Equal(uint64(5538764236368787474)))
+		Expect(crc64FromValue('x', 1.23)).To(Equal(uint64(5538764236368787474)))
+		Expect(crc64FromValue('x', 3.21)).To(Equal(uint64(6459098420131569288)))
+		Expect(crc64FromValue('y', 3.21)).To(Equal(uint64(4453996903255678582)))
+
+		Expect(crc64FromValue('x', 123)).To(Equal(uint64(17364521479190536253)))
+		Expect(crc64FromValue('x', -123)).To(Equal(uint64(6651416055640416575)))
+
+		Expect(crc64FromValue('x', true)).To(Equal(uint64(6688660444647243956)))
+		Expect(crc64FromValue('x', false)).To(Equal(uint64(4088829085531488330)))
+		Expect(crc64FromValue('x', true)).To(Equal(uint64(6688660444647243956)))
+
+		Expect(crc64FromValue('x', "string")).To(Equal(uint64(526724301549245503)))
+		Expect(crc64FromValue('x', "STRING")).To(Equal(uint64(5405123842493546239)))
+	})
+
 })

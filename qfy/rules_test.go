@@ -9,7 +9,7 @@ var _ = Describe("factCheck", func() {
 	var subject Rule
 
 	BeforeEach(func() {
-		subject = CheckFact(FactKey(33), OneOf([]int{3, 2, 1}))
+		subject = CheckFact(FactKey(33), OneOf([]int64{3, 2, 1}))
 	})
 
 	It("should return a string", func() {
@@ -21,14 +21,14 @@ var _ = Describe("factCheck", func() {
 	})
 
 	It("should perform", func() {
-		Expect(subject.perform(mockFact{FactKey(33): []int{1}}, NewState())).To(BeTrue())
-		Expect(subject.perform(mockFact{FactKey(33): []int{4}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(34): []int{1}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{4}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(34): []int64{1}}, NewState())).To(BeFalse())
 	})
 
 	It("should capture state", func() {
 		state := NewState()
-		Expect(subject.perform(mockFact{FactKey(33): []int{1}}, state)).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{1}}, state)).To(BeTrue())
 		Expect(state.rules).To(Equal(map[uint64]bool{
 			3048486384098978521: true,
 		}))
@@ -42,8 +42,8 @@ var _ = Describe("conjunction", func() {
 
 	BeforeEach(func() {
 		subject = All(
-			CheckFact(33, OneOf([]int{3, 2, 1})),
-			CheckFact(33, OneOf([]int{4, 5, 6})),
+			CheckFact(33, OneOf([]int64{3, 2, 1})),
+			CheckFact(33, OneOf([]int64{4, 5, 6})),
 		)
 	})
 
@@ -56,19 +56,19 @@ var _ = Describe("conjunction", func() {
 	})
 
 	It("should perform", func() {
-		Expect(All().perform(mockFact{FactKey(33): []int{1}}, NewState())).To(BeFalse())
+		Expect(All().perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(BeFalse())
 
-		Expect(subject.perform(mockFact{FactKey(33): []int{}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int{1}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int{1, 2}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int{5, 2}}, NewState())).To(BeTrue())
-		Expect(subject.perform(mockFact{FactKey(33): []int{7, 2}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int{7, 8}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{1, 2}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{5, 2}}, NewState())).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{7, 2}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{7, 8}}, NewState())).To(BeFalse())
 	})
 
 	It("should capture state", func() {
 		state := NewState()
-		Expect(subject.perform(mockFact{FactKey(33): []int{5, 2}}, state)).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{5, 2}}, state)).To(BeTrue())
 		Expect(state.rules).To(HaveLen(2))
 		Expect(state.facts).To(HaveLen(1))
 	})
@@ -80,8 +80,8 @@ var _ = Describe("disjunction", func() {
 
 	BeforeEach(func() {
 		subject = Any(
-			CheckFact(33, OneOf([]int{3, 2, 1})),
-			CheckFact(34, OneOf([]int{4, 5, 6})),
+			CheckFact(33, OneOf([]int64{3, 2, 1})),
+			CheckFact(34, OneOf([]int64{4, 5, 6})),
 		)
 	})
 
@@ -94,20 +94,20 @@ var _ = Describe("disjunction", func() {
 	})
 
 	It("should perform", func() {
-		Expect(Any().perform(mockFact{FactKey(33): []int{1}}, NewState())).To(BeFalse())
+		Expect(Any().perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(BeFalse())
 
 		Expect(subject.perform(mockFact{}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int{4}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(34): []int{7}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int{4}, FactKey(34): []int{7}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int{}, FactKey(34): []int{5}}, NewState())).To(BeTrue())
-		Expect(subject.perform(mockFact{FactKey(33): []int{1}, FactKey(34): []int{}}, NewState())).To(BeTrue())
-		Expect(subject.perform(mockFact{FactKey(33): []int{1}, FactKey(34): []int{5}}, NewState())).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{4}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(34): []int64{7}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{4}, FactKey(34): []int64{7}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{}, FactKey(34): []int64{5}}, NewState())).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{1}, FactKey(34): []int64{}}, NewState())).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{1}, FactKey(34): []int64{5}}, NewState())).To(BeTrue())
 	})
 
 	It("should capture state", func() {
 		state := NewState()
-		Expect(subject.perform(mockFact{FactKey(33): []int{}, FactKey(34): []int{5}}, state)).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int64{}, FactKey(34): []int64{5}}, state)).To(BeTrue())
 		Expect(state.rules).To(HaveLen(2))
 		Expect(state.facts).To(HaveLen(2))
 	})
