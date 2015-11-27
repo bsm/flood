@@ -1,155 +1,115 @@
 package qfy
 
 import (
-	"github.com/bsm/intset"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Inclusion", func() {
-	var subject *Inclusion
-	var _ Rule = subject
+var _ = Describe("factCheck", func() {
+	var subject Rule
 
 	BeforeEach(func() {
-		subject = OneOf([]int{3, 2, 1})
+		subject = CheckFact(FactKey(33), OneOf([]int{3, 2, 1}))
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`+[1 2 3]`))
+		Expect(subject.String()).To(Equal(`[33]+[1 2 3]`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.UID()).To(Equal(uint64(4016361724135366094)))
-		Expect(OneOf([]int{2, 3, 1}).UID()).To(Equal(uint64(4016361724135366094)))
-		Expect(OneOf([]int{7, 8, 9}).UID()).To(Equal(uint64(11523927376963847877)))
+		Expect(subject.crc64()).To(Equal(uint64(3048486384098978521)))
 	})
 
-	It("should check inclusion", func() {
-		Expect(subject.Match(nil)).To(BeFalse())
-		Expect(subject.Match(intset.Use())).To(BeFalse())
-		Expect(subject.Match(intset.Use(1))).To(BeTrue())
-		Expect(subject.Match(intset.Use(1, 2))).To(BeTrue())
-		Expect(subject.Match(intset.Use(7, 2))).To(BeTrue())
-		Expect(subject.Match(intset.Use(7, 8))).To(BeFalse())
+	It("should perform", func() {
+		Expect(subject.perform(mockFact{FactKey(33): []int{1}}, NewState())).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int{4}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(34): []int{1}}, NewState())).To(BeFalse())
+	})
+
+	It("should capture state", func() {
+		state := NewState()
+		Expect(subject.perform(mockFact{FactKey(33): []int{1}}, state)).To(BeTrue())
+		Expect(state.rules).To(Equal(map[uint64]bool{
+			3048486384098978521: true,
+		}))
+		Expect(state.facts).To(HaveLen(1))
+		Expect(state.facts).To(HaveKey(FactKey(33)))
 	})
 })
 
-var _ = Describe("Exclusion", func() {
-	var subject *Exclusion
-	var _ Rule = subject
-
-	BeforeEach(func() {
-		subject = NoneOf([]int{3, 2, 1})
-	})
-
-	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`-[1 2 3]`))
-	})
-
-	It("should have an ID", func() {
-		Expect(subject.UID()).To(Equal(uint64(17194010691906675252)))
-		Expect(NoneOf([]int{2, 3, 1}).UID()).To(Equal(uint64(17194010691906675252)))
-		Expect(NoneOf([]int{7, 8, 9}).UID()).To(Equal(uint64(5101638233538279743)))
-	})
-
-	It("should check exclusion", func() {
-		Expect(subject.Match(nil)).To(BeTrue())
-		Expect(subject.Match(intset.Use())).To(BeTrue())
-		Expect(subject.Match(intset.Use(1))).To(BeFalse())
-		Expect(subject.Match(intset.Use(1, 2))).To(BeFalse())
-		Expect(subject.Match(intset.Use(7, 2))).To(BeFalse())
-		Expect(subject.Match(intset.Use(7, 8))).To(BeTrue())
-	})
-
-})
-
-var _ = Describe("Negation", func() {
-	var subject *Negation
-	var _ Rule = subject
-
-	BeforeEach(func() {
-		subject = Not(OneOf([]int{3, 2, 1}))
-	})
-
-	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`( NOT +[1 2 3] )`))
-	})
-
-	It("should have an ID", func() {
-		Expect(subject.UID()).To(Equal(uint64(15410618248837124505)))
-	})
-
-	It("should require the opposite to match", func() {
-		Expect(subject.Match(intset.Use())).To(BeTrue())
-		Expect(subject.Match(intset.Use(1))).To(BeFalse())
-		Expect(subject.Match(intset.Use(1, 2))).To(BeFalse())
-		Expect(subject.Match(intset.Use(5, 2))).To(BeFalse())
-		Expect(subject.Match(intset.Use(7, 2))).To(BeFalse())
-		Expect(subject.Match(intset.Use(7, 8))).To(BeTrue())
-	})
-
-})
-
-var _ = Describe("Conjunction", func() {
-	var subject *Conjunction
-	var _ Rule = subject
+var _ = Describe("conjunction", func() {
+	var subject Rule
 
 	BeforeEach(func() {
 		subject = All(
-			OneOf([]int{3, 2, 1}),
-			OneOf([]int{4, 5, 6}),
+			CheckFact(33, OneOf([]int{3, 2, 1})),
+			CheckFact(33, OneOf([]int{4, 5, 6})),
 		)
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`( +[1 2 3] AND +[4 5 6] )`))
+		Expect(subject.String()).To(Equal(`( [33]+[1 2 3] && [33]+[4 5 6] )`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.UID()).To(Equal(uint64(5902990494815549339)))
+		Expect(subject.crc64()).To(Equal(uint64(13701729182879459540)))
 	})
 
-	It("should require all to match", func() {
-		Expect(All().Match(intset.Use(1))).To(BeFalse())
+	It("should perform", func() {
+		Expect(All().perform(mockFact{FactKey(33): []int{1}}, NewState())).To(BeFalse())
 
-		Expect(subject.Match(intset.Use())).To(BeFalse())
-		Expect(subject.Match(intset.Use(1))).To(BeFalse())
-		Expect(subject.Match(intset.Use(1, 2))).To(BeFalse())
-		Expect(subject.Match(intset.Use(5, 2))).To(BeTrue())
-		Expect(subject.Match(intset.Use(7, 2))).To(BeFalse())
-		Expect(subject.Match(intset.Use(7, 8))).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int{}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int{1}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int{1, 2}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int{5, 2}}, NewState())).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int{7, 2}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int{7, 8}}, NewState())).To(BeFalse())
+	})
+
+	It("should capture state", func() {
+		state := NewState()
+		Expect(subject.perform(mockFact{FactKey(33): []int{5, 2}}, state)).To(BeTrue())
+		Expect(state.rules).To(HaveLen(2))
+		Expect(state.facts).To(HaveLen(1))
 	})
 
 })
 
-var _ = Describe("Disjunction", func() {
-	var subject *Disjunction
-	var _ Rule = subject
+var _ = Describe("disjunction", func() {
+	var subject Rule
 
 	BeforeEach(func() {
 		subject = Any(
-			OneOf([]int{3, 2, 1}),
-			OneOf([]int{4, 5, 6}),
+			CheckFact(33, OneOf([]int{3, 2, 1})),
+			CheckFact(34, OneOf([]int{4, 5, 6})),
 		)
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`( +[1 2 3] OR +[4 5 6] )`))
+		Expect(subject.String()).To(Equal(`( [33]+[1 2 3] || [34]+[4 5 6] )`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.UID()).To(Equal(uint64(4689319512059230670)))
+		Expect(subject.crc64()).To(Equal(uint64(17948886287937560725)))
 	})
 
-	It("should require any to match", func() {
-		Expect(Any().Match(intset.Use(1))).To(BeFalse())
+	It("should perform", func() {
+		Expect(Any().perform(mockFact{FactKey(33): []int{1}}, NewState())).To(BeFalse())
 
-		Expect(subject.Match(nil)).To(BeFalse())
-		Expect(subject.Match(intset.Use())).To(BeFalse())
-		Expect(subject.Match(intset.Use(1))).To(BeTrue())
-		Expect(subject.Match(intset.Use(1, 2))).To(BeTrue())
-		Expect(subject.Match(intset.Use(7, 2))).To(BeTrue())
-		Expect(subject.Match(intset.Use(7, 8))).To(BeFalse())
+		Expect(subject.perform(mockFact{}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int{4}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(34): []int{7}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int{4}, FactKey(34): []int{7}}, NewState())).To(BeFalse())
+		Expect(subject.perform(mockFact{FactKey(33): []int{}, FactKey(34): []int{5}}, NewState())).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int{1}, FactKey(34): []int{}}, NewState())).To(BeTrue())
+		Expect(subject.perform(mockFact{FactKey(33): []int{1}, FactKey(34): []int{5}}, NewState())).To(BeTrue())
+	})
+
+	It("should capture state", func() {
+		state := NewState()
+		Expect(subject.perform(mockFact{FactKey(33): []int{}, FactKey(34): []int{5}}, state)).To(BeTrue())
+		Expect(state.rules).To(HaveLen(2))
+		Expect(state.facts).To(HaveLen(2))
 	})
 
 })

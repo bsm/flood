@@ -1,7 +1,6 @@
 package qfy
 
 import (
-	"bytes"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -15,40 +14,29 @@ var _ = Describe("Qualifier", func() {
 
 	BeforeEach(func() {
 		dict = NewDict()
-		subject = New([]string{"unused", "country", "browser", "domains"})
+		subject = New()
 
-		subject.Feed(91, map[string]Rule{
-			"country": OneOf(dict.AddSlice("US")),
-			"browser": NoneOf(dict.AddSlice("IE")),
-			"domains": All(
-				OneOf(dict.AddSlice("a.com", "b.com")),
-				NoneOf(dict.AddSlice("c.com")),
-			),
-		})
+		subject.Resolve(All(
+			mockFactCountry.MustBe(OneOf(dict.AddSlice("US"))),
+			mockFactBrowser.MustBe(NoneOf(dict.AddSlice("IE"))),
+			mockFactDomains.MustInclude(OneOf(dict.AddSlice("a.com", "b.com"))),
+			mockFactDomains.MustInclude(NoneOf(dict.AddSlice("c.com"))),
+		), 91)
 
-		subject.Feed(92, map[string]Rule{
-			"country": NoneOf(dict.AddSlice("CA")),
-			"domains": All(
-				OneOf(dict.AddSlice("b.com", "c.com")),
-				OneOf(dict.AddSlice("d.com", "a.com")),
-			),
-		})
+		subject.Resolve(All(
+			mockFactCountry.MustBe(NoneOf(dict.AddSlice("CA"))),
+			mockFactDomains.MustInclude(OneOf(dict.AddSlice("b.com", "c.com"))),
+			mockFactDomains.MustInclude(OneOf(dict.AddSlice("d.com", "a.com"))),
+		), 92)
 
-		subject.Feed(93, map[string]Rule{
-			"country": OneOf(dict.AddSlice("US")),
-			"browser": NoneOf(dict.AddSlice("OP")),
-		})
+		subject.Resolve(All(
+			mockFactCountry.MustBe(OneOf(dict.AddSlice("US"))),
+			mockFactBrowser.MustBe(NoneOf(dict.AddSlice("OP"))),
+		), 93)
 	})
 
-	It("should feed with data", func() {
-		Expect(subject.root.children).To(HaveLen(1))
-		Expect(subject.root.children[0].(*passNode).children).To(HaveLen(2))
-	})
-
-	It("should graph", func() {
-		w := &bytes.Buffer{}
-		subject.Graph(w)
-		Expect(w.String()).To(ContainSubstring("\tN0000000000000000 [label = \"[root]\"]\n"))
+	It("should register targets", func() {
+		Expect(subject.registry).To(HaveLen(3))
 	})
 
 	DescribeTable("matching",
@@ -82,10 +70,18 @@ func TestSuite(t *testing.T) {
 	RunSpecs(t, "flood/qfy")
 }
 
-type mockFact map[string][]int
+// --------------------------------------------------------------------
 
-func (m mockFact) GetQualifiable(attr string) []int {
-	vv, _ := m[attr]
+const (
+	mockFactCountry FactKey = iota
+	mockFactBrowser
+	mockFactDomains
+)
+
+type mockFact map[FactKey][]int
+
+func (m mockFact) GetQualifiable(key FactKey) []int {
+	vv, _ := m[key]
 	return vv
 }
 
@@ -96,13 +92,13 @@ type mockFactStruct struct {
 	Domains          []string
 }
 
-func (m *mockFactStruct) GetQualifiable(attr string) []int {
-	switch attr {
-	case "country":
+func (m *mockFactStruct) GetQualifiable(key FactKey) []int {
+	switch key {
+	case mockFactCountry:
 		return m.D.GetSlice(m.Country)
-	case "browser":
+	case mockFactBrowser:
 		return m.D.GetSlice(m.Browser)
-	case "domains":
+	case mockFactDomains:
 		return m.D.GetSlice(m.Domains...)
 	}
 	return nil

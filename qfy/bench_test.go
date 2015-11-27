@@ -4,23 +4,51 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"reflect"
+	"strings"
 	"testing"
 )
 
 func BenchmarkQualifier(b *testing.B) {
-	helper, err := newBenchHelper()
+	h, err := newBenchHelper()
 	if err != nil {
 		b.Fatal(err)
 	}
 
+	for i := 0; i < 1000; i++ {
+		fact := h.fcts[i%h.size]
+		h.q.Select(fact)
+	}
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		fact := helper.fcts[i%helper.size]
-		helper.qlfy.Select(fact)
+		fact := h.fcts[i%h.size]
+		h.q.Select(fact)
 	}
 }
 
 // --------------------------------------------------------------------
+
+func init() {
+	// Populate benchFactKeyMap
+	for i := 0; i < benchFactType.NumField(); i++ {
+		rf := benchFactType.Field(i)
+		name := rf.Tag.Get("json")
+		name = name[:strings.Index(name, ",")]
+		benchFactKeyMap[name] = FactKey(i)
+	}
+
+	fact := &benchFact{Dev: "ok", Vcat: []int{2, 6}}
+	fact.GetQualifiable(benchFactKeyMap["vcat"])
+}
+
+var (
+	benchFactKeyMap      = make(map[string]FactKey)
+	benchFactType        = reflect.TypeOf(benchFact{})
+	benchStringSliceType = reflect.TypeOf([]string{})
+	benchIntSliceType    = reflect.TypeOf([]int{})
+	benchDict            = NewDict()
+)
 
 type benchFact struct {
 	Dev    string   `json:"dev,omitempty"`
@@ -49,75 +77,38 @@ type benchFact struct {
 	Rcat   []int    `json:"rcat,omitempty"`
 }
 
-func (bf *benchFact) GetQualifiable(name string) []int {
-	switch name {
-	case "dev":
-		return benchDict.GetSlice(bf.Dev)
-	case "tod":
-		return []int{bf.Tod}
-	case "bwsm":
-		return benchDict.GetSlice(bf.Bwsm)
-	case "ctry":
-		return benchDict.GetSlice(bf.Ctry)
-	case "exch":
-		return []int{bf.Exch}
-	case "klmn":
-		return []int{bf.Klmn}
-	case "wr":
-		return []int{bf.Wr}
-	case "pos":
-		return []int{bf.Pos}
-	case "wl":
-		return []int{bf.Wl}
-	case "isp":
-		return benchDict.GetSlice(bf.Isp)
-	case "pcode":
-		return benchDict.GetSlice(bf.Pcode)
-	case "mob":
-		return []int{bf.Mob}
-	case "strm":
-		return benchDict.GetSlice(bf.Strm)
-	case "ws":
-		return []int{bf.Ws}
-	case "loc":
-		return benchDict.GetSlice(bf.Loc)
-	case "domain":
-		return benchDict.GetSlice(bf.Domain)
-	case "rcat":
-		return bf.Rcat
-	case "vcat":
-		return bf.Vcat
-	case "infq":
-		return benchDict.GetSlice(bf.Infq...)
-	case "reg":
-		return benchDict.GetSlice(bf.Reg)
-	case "ac":
-		return benchDict.GetSlice(bf.Ac)
-	case "hb":
-		return []int{bf.Hb}
-	case "kws":
-		return benchDict.GetSlice(bf.Kws...)
-	case "pmnt":
-		return benchDict.GetSlice(bf.Pmnt)
+func (bf *benchFact) GetQualifiable(key FactKey) []int {
+	field := reflect.ValueOf(bf).Elem().Field(int(key))
+
+	switch field.Kind() {
+	case reflect.String:
+		return benchDict.GetSlice(field.String())
+	case reflect.Int:
+		return []int{int(field.Int())}
+	case reflect.Slice:
+		switch field.Type() {
+		case benchStringSliceType:
+			return benchDict.GetSlice(field.Interface().([]string)...)
+		case benchIntSliceType:
+			return field.Interface().([]int)
+		}
 	}
 	return nil
 }
 
 // --------------------------------------------------------------------
 
-var benchAttrs = []string{
-	"wl", "strm", "dev", "pos", "hb", "wr", "klmn", "mob",
-	"ws", "loc", "isp", "pcode", "bwsm", "ctry", "tod", "ac",
-	"pmnt", "exch", "reg", "infq", "rcat", "vcat", "kws", "domain",
+type benchTargetValues []json.Number
+
+func (s benchTargetValues) Vals() []int {
+	vals, err := s.Ints()
+	if err != nil {
+		vals = benchDict.AddSlice(s.Strings()...)
+	}
+	return vals
 }
 
-var benchDict = NewDict()
-
-// --------------------------------------------------------------------
-
-type jsonSlice []json.Number
-
-func (s jsonSlice) Strings() []string {
+func (s benchTargetValues) Strings() []string {
 	res := make([]string, len(s))
 	for i, n := range s {
 		res[i] = n.String()
@@ -125,7 +116,7 @@ func (s jsonSlice) Strings() []string {
 	return res
 }
 
-func (s jsonSlice) Ints() ([]int, error) {
+func (s benchTargetValues) Ints() ([]int, error) {
 	res := make([]int, len(s))
 	for i, n := range s {
 		num, err := n.Int64()
@@ -140,7 +131,7 @@ func (s jsonSlice) Ints() ([]int, error) {
 // --------------------------------------------------------------------
 
 type benchHelper struct {
-	qlfy *Qualifier
+	q    *Qualifier
 	fcts []Fact
 	size int
 }
@@ -162,44 +153,31 @@ func (bh *benchHelper) parseQualifier() error {
 	}
 	defer file.Close()
 
-	var targets []struct {
+	var targeting []struct {
 		ID    int
 		Rules []struct {
 			Attr, Op string
-			Values   jsonSlice
+			Values   benchTargetValues
 		}
 	}
-	if err := json.NewDecoder(file).Decode(&targets); err != nil {
+	if err := json.NewDecoder(file).Decode(&targeting); err != nil {
 		return err
 	}
 
-	bh.qlfy = New(benchAttrs)
-	for _, target := range targets {
-		byAttr := make(map[string][]Rule)
-		for _, def := range target.Rules {
-			if len(def.Values) == 0 {
-				continue
-			}
-			vals, err := def.Values.Ints()
-			if err != nil {
-				vals = benchDict.AddSlice(def.Values.Strings()...)
-			}
-			if def.Op == "-" {
-				byAttr[def.Attr] = append(byAttr[def.Attr], NoneOf(vals))
-			} else {
-				byAttr[def.Attr] = append(byAttr[def.Attr], OneOf(vals))
-			}
-		}
+	bh.q = New()
+	for _, target := range targeting {
+		var rules []Rule
+		for _, rdef := range target.Rules {
+			key := benchFactKeyMap[rdef.Attr]
+			vals := rdef.Values.Vals()
 
-		rules := make(map[string]Rule, len(byAttr))
-		for attr, rs := range byAttr {
-			if len(rs) == 1 {
-				rules[attr] = rs[0]
+			if rdef.Op == "-" {
+				rules = append(rules, key.MustBe(NoneOf(vals)))
 			} else {
-				rules[attr] = All(rs...)
+				rules = append(rules, key.MustBe(OneOf(vals)))
 			}
 		}
-		bh.qlfy.Feed(target.ID, rules)
+		bh.q.Resolve(All(rules...), target.ID)
 	}
 	return nil
 }
