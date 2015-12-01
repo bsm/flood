@@ -39,9 +39,12 @@ func (h *CRC64) Sum64() uint64 {
 
 // --------------------------------------------------------------------
 
-func crc64FromValue(sign byte, v interface{}) uint64 {
+func crc64FromValue(sign byte, vv ...interface{}) uint64 {
 	sub := crc64.New(crcTable)
-	gob.NewEncoder(sub).Encode(v)
+	enc := gob.NewEncoder(sub)
+	for _, v := range vv {
+		enc.Encode(v)
+	}
 
 	hash := NewCRC64(sign, 1)
 	hash.Add(sub.Sum64())

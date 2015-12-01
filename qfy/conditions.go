@@ -36,6 +36,137 @@ func (r *Equality) CRC64() uint64 { return crc64FromValue('=', r.val) }
 
 // --------------------------------------------------------------------
 
+// NumericGreaterOrEqual conditions require the fact value to match input.
+type NumericGreaterOrEqual struct{ val float64 }
+
+// GreaterOrEqual constructs a NumericGreaterOrEqual condition
+// Supports intN and floatN fact values as inputs.
+func GreaterOrEqual(v float64) *NumericGreaterOrEqual { return &NumericGreaterOrEqual{v} }
+
+// Match tests if the condition is qualified
+func (r *NumericGreaterOrEqual) Match(v interface{}) bool {
+	switch vv := v.(type) {
+	case int64:
+		return float64(vv) >= r.val
+	case float64:
+		return vv >= r.val
+	}
+	return false
+}
+
+// String returns a human-readable description
+func (r *NumericGreaterOrEqual) String() string { return fmt.Sprintf(">=%v", r.val) }
+
+// CRC64 returns a unique ID
+func (r *NumericGreaterOrEqual) CRC64() uint64 { return crc64FromValue('(', r.val) }
+
+// --------------------------------------------------------------------
+
+// NumericLessOrEqual conditions require the fact value to match input.
+type NumericLessOrEqual struct{ val float64 }
+
+// LessOrEqual constructs a NumericLessOrEqual condition
+// Supports intN and floatN fact values as inputs.
+func LessOrEqual(v float64) *NumericLessOrEqual { return &NumericLessOrEqual{v} }
+
+// Match tests if the condition is qualified
+func (r *NumericLessOrEqual) Match(v interface{}) bool {
+	switch vv := v.(type) {
+	case int64:
+		return float64(vv) <= r.val
+	case float64:
+		return vv <= r.val
+	}
+	return false
+}
+
+// String returns a human-readable description
+func (r *NumericLessOrEqual) String() string { return fmt.Sprintf("<=%v", r.val) }
+
+// CRC64 returns a unique ID
+func (r *NumericLessOrEqual) CRC64() uint64 { return crc64FromValue(')', r.val) }
+
+// --------------------------------------------------------------------
+
+// NumericGreater conditions require the fact value to match input.
+type NumericGreater struct{ val float64 }
+
+// GreaterThan constructs a NumericGreater condition
+// Supports intN and floatN fact values as inputs.
+func GreaterThan(v float64) *NumericGreater { return &NumericGreater{v} }
+
+// Match tests if the condition is qualified
+func (r *NumericGreater) Match(v interface{}) bool {
+	switch vv := v.(type) {
+	case int64:
+		return float64(vv) > r.val
+	case float64:
+		return vv > r.val
+	}
+	return false
+}
+
+// String returns a human-readable description
+func (r *NumericGreater) String() string { return fmt.Sprintf(">%v", r.val) }
+
+// CRC64 returns a unique ID
+func (r *NumericGreater) CRC64() uint64 { return crc64FromValue('>', r.val) }
+
+// --------------------------------------------------------------------
+
+// NumericLess conditions require the fact value to match input.
+type NumericLess struct{ val float64 }
+
+// LessThan constructs a NumericLess condition
+// Supports intN and floatN fact values as inputs.
+func LessThan(v float64) *NumericLess { return &NumericLess{v} }
+
+// Match tests if the condition is qualified
+func (r *NumericLess) Match(v interface{}) bool {
+	switch vv := v.(type) {
+	case int64:
+		return float64(vv) < r.val
+	case float64:
+		return vv < r.val
+	}
+	return false
+}
+
+// String returns a human-readable description
+func (r *NumericLess) String() string { return fmt.Sprintf("<%v", r.val) }
+
+// CRC64 returns a unique ID
+func (r *NumericLess) CRC64() uint64 { return crc64FromValue('<', r.val) }
+
+// --------------------------------------------------------------------
+
+// NumericRange conditions require the fact value to match input.
+type NumericRange struct{ min, max float64 }
+
+// Between constructs a NumericRange condition
+// Supports intN and floatN fact values as inputs.
+func Between(min, max float64) *NumericRange { return &NumericRange{min, max} }
+
+// Match tests if the condition is qualified
+func (r *NumericRange) Match(v interface{}) bool {
+	switch vv := v.(type) {
+	case int64:
+		fv := float64(vv)
+		return fv >= r.min && fv <= r.max
+	case float64:
+		return vv >= r.min && vv <= r.max
+	}
+	return false
+}
+
+// String returns a human-readable description
+func (r *NumericRange) String() string { return fmt.Sprintf("%v..%v", r.min, r.max) }
+
+// CRC64 returns a unique ID
+func (r *NumericRange) CRC64() uint64 { return crc64FromValue('~', r.min, r.max) }
+
+// --------------------------------------------------------------------
+
 // Inclusion conditions require at least one value to be present in the fact
 // Supports only int64 and []int64 fact values as inputs.
 type Inclusion struct{ vals Ints64 }
