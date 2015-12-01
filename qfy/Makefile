@@ -4,27 +4,28 @@ test:
 	go test ./... -v
 
 bench: testdata/facts.json
-	go test ./... -test.run=NONE -test.bench=. -test.benchmem -test.benchtime=5s
+	go test ./... -run=NONE -bench=. -benchmem -benchtime=5s
 
 benchclean:
 	rm testdata/facts.json
 
-graph: testdata/nodes.svg
-
-graphclean:
-	rm testdata/nodes.dot
-
-profile: testdata/cpu.profile
+profile-cpu: testdata/cpu.profile
 	go tool pprof ./qfy.test $<
 
+profile-mem: testdata/mem.profile
+	go tool pprof --alloc_objects ./qfy.test $<
+
+testdata/cpu.svg: testdata/cpu.profile
+	go tool pprof -cum -focus=Select -svg -output=$@ ./qfy.test $<
+
+testdata/mem.svg: testdata/mem.profile
+	go tool pprof --alloc_objects -cum -focus=Select -svg -output=$@ ./qfy.test $<
+
 testdata/cpu.profile: $(SOURCES) testdata/facts.json
-	go test . -test.run=NONE -test.bench=. -test.benchmem -test.benchtime=30s -test.cpuprofile=$@
+	go test . -run=NONE -bench=. -benchmem -benchtime=30s -cpuprofile=$@
+
+testdata/mem.profile: $(SOURCES) testdata/facts.json
+	go test . -run=NONE -bench=. -benchmem -benchtime=30s -memprofile=$@
 
 testdata/facts.json: testdata/targets.json
 	testdata/generate.rb
-
-testdata/nodes.dot: testdata/targets.json $(SOURCES)
-	go run cmd/flood-qfy-graph/main.go -in testdata/targets.json -n 100 > $@
-
-testdata/nodes.svg: testdata/nodes.dot
-	dot -Tsvg $< -o $@
