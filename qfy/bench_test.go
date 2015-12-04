@@ -15,11 +15,6 @@ func BenchmarkQualifier(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	for i := 0; i < 1000; i++ {
-		fact := h.fcts[i%h.size]
-		h.q.Select(fact)
-	}
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		fact := h.fcts[i%h.size]

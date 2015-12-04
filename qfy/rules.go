@@ -105,14 +105,14 @@ func (r *factCheck) perform(fact Fact, state *State) bool {
 		case []uint64:
 			v = ints64FromUints64(vv)
 		default:
-			state.rules[r.hash] = false
+			state.rules[r.crc64()] = false
 			return false
 		}
 		state.facts[r.key] = v
 	}
 
 	match := r.cond.Match(v)
-	state.rules[r.hash] = match
+	state.rules[r.crc64()] = match
 	return match
 }
 
@@ -137,7 +137,11 @@ func (r *conjunction) perform(fact Fact, state *State) bool {
 	if len(r.rules) == 0 {
 		return false
 	}
-
+	for _, rule := range r.rules {
+		if match, ok := state.rules[rule.crc64()]; ok && !match {
+			return false
+		}
+	}
 	for _, rule := range r.rules {
 		if !rule.perform(fact, state) {
 			return false
@@ -164,6 +168,11 @@ func (r *disjunction) String() string { return rulesToString(r.rules, " || ") }
 
 func (r *disjunction) crc64() uint64 { return r.hash }
 func (r *disjunction) perform(fact Fact, state *State) bool {
+	for _, rule := range r.rules {
+		if match, ok := state.rules[rule.crc64()]; ok && match {
+			return true
+		}
+	}
 	for _, rule := range r.rules {
 		if rule.perform(fact, state) {
 			return true
