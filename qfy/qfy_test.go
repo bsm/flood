@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
+	g "github.com/onsi/gomega"
 )
 
 var _ = Describe("Qualifier", func() {
@@ -36,13 +36,13 @@ var _ = Describe("Qualifier", func() {
 	})
 
 	It("should register targets", func() {
-		Expect(subject.registry).To(HaveLen(3))
+		g.Expect(subject.registry).To(g.HaveLen(3))
 	})
 
 	DescribeTable("matching",
 		func(fact *mockFactStruct, expected []int64) {
 			fact.D = dict // assign dict
-			Expect(subject.Select(fact)).To(ConsistOf(expected))
+			g.Expect(subject.Select(fact)).To(g.ConsistOf(expected))
 		},
 
 		Entry("blank",
@@ -66,7 +66,7 @@ var _ = Describe("Qualifier", func() {
 // --------------------------------------------------------------------
 
 func TestSuite(t *testing.T) {
-	RegisterFailHandler(Fail)
+	g.RegisterFailHandler(Fail)
 	RunSpecs(t, "flood/qfy")
 }
 

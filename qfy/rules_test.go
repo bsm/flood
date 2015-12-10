@@ -2,7 +2,7 @@ package qfy
 
 import (
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	g "github.com/onsi/gomega"
 )
 
 var _ = Describe("factCheck", func() {
@@ -13,27 +13,27 @@ var _ = Describe("factCheck", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`[33]+[1 2 3]`))
+		g.Expect(subject.String()).To(g.Equal(`[33]+[1 2 3]`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.crc64()).To(Equal(uint64(3048486384098978521)))
+		g.Expect(subject.crc64()).To(g.Equal(uint64(3048486384098978521)))
 	})
 
 	It("should perform", func() {
-		Expect(subject.perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(BeTrue())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{4}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(34): []int64{1}}, NewState())).To(BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(g.BeTrue())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{4}}, NewState())).To(g.BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(34): []int64{1}}, NewState())).To(g.BeFalse())
 	})
 
 	It("should capture state", func() {
 		state := NewState()
-		Expect(subject.perform(mockFact{FactKey(33): []int64{1}}, state)).To(BeTrue())
-		Expect(state.rules).To(Equal(map[uint64]bool{
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{1}}, state)).To(g.BeTrue())
+		g.Expect(state.rules).To(g.Equal(map[uint64]bool{
 			3048486384098978521: true,
 		}))
-		Expect(state.facts).To(HaveLen(1))
-		Expect(state.facts).To(HaveKey(FactKey(33)))
+		g.Expect(state.facts).To(g.HaveLen(1))
+		g.Expect(state.facts).To(g.HaveKey(FactKey(33)))
 	})
 })
 
@@ -48,29 +48,29 @@ var _ = Describe("conjunction", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`( [33]+[1 2 3] && [33]+[4 5 6] )`))
+		g.Expect(subject.String()).To(g.Equal(`( [33]+[1 2 3] && [33]+[4 5 6] )`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.crc64()).To(Equal(uint64(13701729182879459540)))
+		g.Expect(subject.crc64()).To(g.Equal(uint64(13701729182879459540)))
 	})
 
 	It("should perform", func() {
-		Expect(All().perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(BeFalse())
+		g.Expect(All().perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(g.BeFalse())
 
-		Expect(subject.perform(mockFact{FactKey(33): []int64{}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{1, 2}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{5, 2}}, NewState())).To(BeTrue())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{7, 2}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{7, 8}}, NewState())).To(BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{}}, NewState())).To(g.BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(g.BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{1, 2}}, NewState())).To(g.BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{5, 2}}, NewState())).To(g.BeTrue())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{7, 2}}, NewState())).To(g.BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{7, 8}}, NewState())).To(g.BeFalse())
 	})
 
 	It("should capture state", func() {
 		state := NewState()
-		Expect(subject.perform(mockFact{FactKey(33): []int64{5, 2}}, state)).To(BeTrue())
-		Expect(state.rules).To(HaveLen(2))
-		Expect(state.facts).To(HaveLen(1))
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{5, 2}}, state)).To(g.BeTrue())
+		g.Expect(state.rules).To(g.HaveLen(2))
+		g.Expect(state.facts).To(g.HaveLen(1))
 	})
 
 })
@@ -86,30 +86,30 @@ var _ = Describe("disjunction", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`( [33]+[1 2 3] || [34]+[4 5 6] )`))
+		g.Expect(subject.String()).To(g.Equal(`( [33]+[1 2 3] || [34]+[4 5 6] )`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.crc64()).To(Equal(uint64(17948886287937560725)))
+		g.Expect(subject.crc64()).To(g.Equal(uint64(17948886287937560725)))
 	})
 
 	It("should perform", func() {
-		Expect(Any().perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(BeFalse())
+		g.Expect(Any().perform(mockFact{FactKey(33): []int64{1}}, NewState())).To(g.BeFalse())
 
-		Expect(subject.perform(mockFact{}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{4}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(34): []int64{7}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{4}, FactKey(34): []int64{7}}, NewState())).To(BeFalse())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{}, FactKey(34): []int64{5}}, NewState())).To(BeTrue())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{1}, FactKey(34): []int64{}}, NewState())).To(BeTrue())
-		Expect(subject.perform(mockFact{FactKey(33): []int64{1}, FactKey(34): []int64{5}}, NewState())).To(BeTrue())
+		g.Expect(subject.perform(mockFact{}, NewState())).To(g.BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{4}}, NewState())).To(g.BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(34): []int64{7}}, NewState())).To(g.BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{4}, FactKey(34): []int64{7}}, NewState())).To(g.BeFalse())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{}, FactKey(34): []int64{5}}, NewState())).To(g.BeTrue())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{1}, FactKey(34): []int64{}}, NewState())).To(g.BeTrue())
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{1}, FactKey(34): []int64{5}}, NewState())).To(g.BeTrue())
 	})
 
 	It("should capture state", func() {
 		state := NewState()
-		Expect(subject.perform(mockFact{FactKey(33): []int64{}, FactKey(34): []int64{5}}, state)).To(BeTrue())
-		Expect(state.rules).To(HaveLen(2))
-		Expect(state.facts).To(HaveLen(2))
+		g.Expect(subject.perform(mockFact{FactKey(33): []int64{}, FactKey(34): []int64{5}}, state)).To(g.BeTrue())
+		g.Expect(state.rules).To(g.HaveLen(2))
+		g.Expect(state.facts).To(g.HaveLen(2))
 	})
 
 })

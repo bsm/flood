@@ -2,7 +2,7 @@ package qfy
 
 import (
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	g "github.com/onsi/gomega"
 )
 
 var _ = Describe("Ints64", func() {
@@ -13,21 +13,21 @@ var _ = Describe("Ints64", func() {
 	})
 
 	It("should normalize", func() {
-		Expect(subject).To(Equal(Ints64{2, 4, 6}))
-		Expect(subject.crc64('x')).To(Equal(uint64(6934466117131854228)))
+		g.Expect(subject).To(g.Equal(Ints64{2, 4, 6}))
+		g.Expect(subject.crc64('x')).To(g.Equal(uint64(6934466117131854228)))
 	})
 
 	It("should check if exists", func() {
-		Expect(subject.Exists(1)).To(BeFalse())
-		Expect(subject.Exists(2)).To(BeTrue())
-		Expect(subject.Exists(3)).To(BeFalse())
-		Expect(subject.Exists(4)).To(BeTrue())
+		g.Expect(subject.Exists(1)).To(g.BeFalse())
+		g.Expect(subject.Exists(2)).To(g.BeTrue())
+		g.Expect(subject.Exists(3)).To(g.BeFalse())
+		g.Expect(subject.Exists(4)).To(g.BeTrue())
 	})
 
 	It("should check for intersections", func() {
-		Expect(subject.Inter(SortInts64(3))).To(BeFalse())
-		Expect(subject.Inter(SortInts64(3, 5))).To(BeFalse())
-		Expect(subject.Inter(SortInts64(3, 4, 5, 7))).To(BeTrue())
+		g.Expect(subject.Inter(SortInts64(3))).To(g.BeFalse())
+		g.Expect(subject.Inter(SortInts64(3, 5))).To(g.BeFalse())
+		g.Expect(subject.Inter(SortInts64(3, 4, 5, 7))).To(g.BeTrue())
 	})
 
 })

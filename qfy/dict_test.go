@@ -2,7 +2,7 @@ package qfy
 
 import (
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	g "github.com/onsi/gomega"
 )
 
 var _ = Describe("Dict", func() {
@@ -13,22 +13,22 @@ var _ = Describe("Dict", func() {
 	})
 
 	It("should find or create items", func() {
-		Expect(subject.Add("a")).To(Equal(int64(1)))
-		Expect(subject.Add("b")).To(Equal(int64(2)))
-		Expect(subject.Add("c")).To(Equal(int64(3)))
-		Expect(subject.Add("b")).To(Equal(int64(2)))
-		Expect(subject.Add("a")).To(Equal(int64(1)))
-		Expect(subject).To(Equal(Dict{"a": 1, "b": 2, "c": 3}))
+		g.Expect(subject.Add("a")).To(g.Equal(int64(1)))
+		g.Expect(subject.Add("b")).To(g.Equal(int64(2)))
+		g.Expect(subject.Add("c")).To(g.Equal(int64(3)))
+		g.Expect(subject.Add("b")).To(g.Equal(int64(2)))
+		g.Expect(subject.Add("a")).To(g.Equal(int64(1)))
+		g.Expect(subject).To(g.Equal(Dict{"a": 1, "b": 2, "c": 3}))
 	})
 
 	It("should add slices", func() {
-		Expect(subject.AddSlice("a", "b")).To(Equal([]int64{1, 2}))
-		Expect(subject.AddSlice("c", "b")).To(Equal([]int64{3, 2}))
+		g.Expect(subject.AddSlice("a", "b")).To(g.Equal([]int64{1, 2}))
+		g.Expect(subject.AddSlice("c", "b")).To(g.Equal([]int64{3, 2}))
 	})
 
 	It("should get slices", func() {
-		Expect(subject.AddSlice("a", "b")).To(Equal([]int64{1, 2}))
-		Expect(subject.GetSlice("c", "b", "d", "a")).To(Equal([]int64{2, 1}))
+		g.Expect(subject.AddSlice("a", "b")).To(g.Equal([]int64{1, 2}))
+		g.Expect(subject.GetSlice("c", "b", "d", "a")).To(g.Equal([]int64{2, 1}))
 	})
 
 })
@@ -41,22 +41,22 @@ var _ = Describe("ConcurrentDict", func() {
 	})
 
 	It("should find or create items", func() {
-		Expect(subject.Add("a")).To(Equal(int64(1)))
-		Expect(subject.Add("b")).To(Equal(int64(2)))
-		Expect(subject.Add("c")).To(Equal(int64(3)))
-		Expect(subject.Add("b")).To(Equal(int64(2)))
-		Expect(subject.Add("a")).To(Equal(int64(1)))
-		Expect(subject.dict).To(Equal(Dict{"a": 1, "b": 2, "c": 3}))
+		g.Expect(subject.Add("a")).To(g.Equal(int64(1)))
+		g.Expect(subject.Add("b")).To(g.Equal(int64(2)))
+		g.Expect(subject.Add("c")).To(g.Equal(int64(3)))
+		g.Expect(subject.Add("b")).To(g.Equal(int64(2)))
+		g.Expect(subject.Add("a")).To(g.Equal(int64(1)))
+		g.Expect(subject.dict).To(g.Equal(Dict{"a": 1, "b": 2, "c": 3}))
 	})
 
 	It("should add slices", func() {
-		Expect(subject.AddSlice("a", "b")).To(Equal([]int64{1, 2}))
-		Expect(subject.AddSlice("c", "b")).To(Equal([]int64{3, 2}))
+		g.Expect(subject.AddSlice("a", "b")).To(g.Equal([]int64{1, 2}))
+		g.Expect(subject.AddSlice("c", "b")).To(g.Equal([]int64{3, 2}))
 	})
 
 	It("should get slices", func() {
-		Expect(subject.AddSlice("a", "b")).To(Equal([]int64{1, 2}))
-		Expect(subject.GetSlice("c", "b", "d", "a")).To(Equal([]int64{2, 1}))
+		g.Expect(subject.AddSlice("a", "b")).To(g.Equal([]int64{1, 2}))
+		g.Expect(subject.GetSlice("c", "b", "d", "a")).To(g.Equal([]int64{2, 1}))
 	})
 
 })

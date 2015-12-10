@@ -2,7 +2,7 @@ package qfy
 
 import (
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	g "github.com/onsi/gomega"
 )
 
 var _ = Describe("Equality", func() {
@@ -14,19 +14,19 @@ var _ = Describe("Equality", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`=true`))
+		g.Expect(subject.String()).To(g.Equal(`=true`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.CRC64()).To(Equal(uint64(971422227693832935)))
-		Expect(EqualTo(27).CRC64()).To(Equal(uint64(9340596851114011254)))
+		g.Expect(subject.CRC64()).To(g.Equal(uint64(971422227693832935)))
+		g.Expect(EqualTo(27).CRC64()).To(g.Equal(uint64(9340596851114011254)))
 	})
 
 	It("should check equality", func() {
-		Expect(subject.Match(nil)).To(BeFalse())
-		Expect(subject.Match(1)).To(BeFalse())
-		Expect(subject.Match(true)).To(BeTrue())
-		Expect(subject.Match(false)).To(BeFalse())
+		g.Expect(subject.Match(nil)).To(g.BeFalse())
+		g.Expect(subject.Match(1)).To(g.BeFalse())
+		g.Expect(subject.Match(true)).To(g.BeTrue())
+		g.Expect(subject.Match(false)).To(g.BeFalse())
 	})
 })
 
@@ -39,21 +39,21 @@ var _ = Describe("NumericGreater", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`>5.1`))
+		g.Expect(subject.String()).To(g.Equal(`>5.1`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.CRC64()).To(Equal(uint64(16698526710376199168)))
+		g.Expect(subject.CRC64()).To(g.Equal(uint64(16698526710376199168)))
 	})
 
 	It("should check", func() {
-		Expect(subject.Match(nil)).To(BeFalse())
-		Expect(subject.Match(1)).To(BeFalse())
-		Expect(subject.Match(5.2)).To(BeTrue())
-		Expect(subject.Match(5.05)).To(BeFalse())
-		Expect(subject.Match(5.1)).To(BeFalse())
-		Expect(subject.Match(int64(4))).To(BeFalse())
-		Expect(subject.Match(int64(7))).To(BeTrue())
+		g.Expect(subject.Match(nil)).To(g.BeFalse())
+		g.Expect(subject.Match(1)).To(g.BeFalse())
+		g.Expect(subject.Match(5.2)).To(g.BeTrue())
+		g.Expect(subject.Match(5.05)).To(g.BeFalse())
+		g.Expect(subject.Match(5.1)).To(g.BeFalse())
+		g.Expect(subject.Match(int64(4))).To(g.BeFalse())
+		g.Expect(subject.Match(int64(7))).To(g.BeTrue())
 	})
 })
 
@@ -66,21 +66,21 @@ var _ = Describe("NumericLess", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`<5.1`))
+		g.Expect(subject.String()).To(g.Equal(`<5.1`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.CRC64()).To(Equal(uint64(3414923877884655100)))
+		g.Expect(subject.CRC64()).To(g.Equal(uint64(3414923877884655100)))
 	})
 
 	It("should check", func() {
-		Expect(subject.Match(nil)).To(BeFalse())
-		Expect(subject.Match(1)).To(BeFalse())
-		Expect(subject.Match(5.2)).To(BeFalse())
-		Expect(subject.Match(5.05)).To(BeTrue())
-		Expect(subject.Match(5.1)).To(BeFalse())
-		Expect(subject.Match(int64(4))).To(BeTrue())
-		Expect(subject.Match(int64(7))).To(BeFalse())
+		g.Expect(subject.Match(nil)).To(g.BeFalse())
+		g.Expect(subject.Match(1)).To(g.BeFalse())
+		g.Expect(subject.Match(5.2)).To(g.BeFalse())
+		g.Expect(subject.Match(5.05)).To(g.BeTrue())
+		g.Expect(subject.Match(5.1)).To(g.BeFalse())
+		g.Expect(subject.Match(int64(4))).To(g.BeTrue())
+		g.Expect(subject.Match(int64(7))).To(g.BeFalse())
 	})
 })
 
@@ -93,21 +93,21 @@ var _ = Describe("NumericGreaterOrEqual", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`>=5.1`))
+		g.Expect(subject.String()).To(g.Equal(`>=5.1`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.CRC64()).To(Equal(uint64(2424392493701668213)))
+		g.Expect(subject.CRC64()).To(g.Equal(uint64(2424392493701668213)))
 	})
 
 	It("should check", func() {
-		Expect(subject.Match(nil)).To(BeFalse())
-		Expect(subject.Match(1)).To(BeFalse())
-		Expect(subject.Match(5.2)).To(BeTrue())
-		Expect(subject.Match(5.05)).To(BeFalse())
-		Expect(subject.Match(5.1)).To(BeTrue())
-		Expect(subject.Match(int64(4))).To(BeFalse())
-		Expect(subject.Match(int64(7))).To(BeTrue())
+		g.Expect(subject.Match(nil)).To(g.BeFalse())
+		g.Expect(subject.Match(1)).To(g.BeFalse())
+		g.Expect(subject.Match(5.2)).To(g.BeTrue())
+		g.Expect(subject.Match(5.05)).To(g.BeFalse())
+		g.Expect(subject.Match(5.1)).To(g.BeTrue())
+		g.Expect(subject.Match(int64(4))).To(g.BeFalse())
+		g.Expect(subject.Match(int64(7))).To(g.BeTrue())
 	})
 })
 
@@ -120,21 +120,21 @@ var _ = Describe("NumericLessOrEqual", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`<=5.1`))
+		g.Expect(subject.String()).To(g.Equal(`<=5.1`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.CRC64()).To(Equal(uint64(5028754416248954251)))
+		g.Expect(subject.CRC64()).To(g.Equal(uint64(5028754416248954251)))
 	})
 
 	It("should check", func() {
-		Expect(subject.Match(nil)).To(BeFalse())
-		Expect(subject.Match(1)).To(BeFalse())
-		Expect(subject.Match(5.2)).To(BeFalse())
-		Expect(subject.Match(5.05)).To(BeTrue())
-		Expect(subject.Match(5.1)).To(BeTrue())
-		Expect(subject.Match(int64(4))).To(BeTrue())
-		Expect(subject.Match(int64(7))).To(BeFalse())
+		g.Expect(subject.Match(nil)).To(g.BeFalse())
+		g.Expect(subject.Match(1)).To(g.BeFalse())
+		g.Expect(subject.Match(5.2)).To(g.BeFalse())
+		g.Expect(subject.Match(5.05)).To(g.BeTrue())
+		g.Expect(subject.Match(5.1)).To(g.BeTrue())
+		g.Expect(subject.Match(int64(4))).To(g.BeTrue())
+		g.Expect(subject.Match(int64(7))).To(g.BeFalse())
 	})
 })
 
@@ -147,24 +147,24 @@ var _ = Describe("NumericRange", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`4.2..6.4`))
+		g.Expect(subject.String()).To(g.Equal(`4.2..6.4`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.CRC64()).To(Equal(uint64(6960669049720772570)))
+		g.Expect(subject.CRC64()).To(g.Equal(uint64(6960669049720772570)))
 	})
 
 	It("should check", func() {
-		Expect(subject.Match(nil)).To(BeFalse())
-		Expect(subject.Match(1)).To(BeFalse())
-		Expect(subject.Match(4.1)).To(BeFalse())
-		Expect(subject.Match(5.2)).To(BeTrue())
-		Expect(subject.Match(6.4)).To(BeTrue())
-		Expect(subject.Match(6.5)).To(BeFalse())
-		Expect(subject.Match(int64(4))).To(BeFalse())
-		Expect(subject.Match(int64(5))).To(BeTrue())
-		Expect(subject.Match(int64(6))).To(BeTrue())
-		Expect(subject.Match(int64(7))).To(BeFalse())
+		g.Expect(subject.Match(nil)).To(g.BeFalse())
+		g.Expect(subject.Match(1)).To(g.BeFalse())
+		g.Expect(subject.Match(4.1)).To(g.BeFalse())
+		g.Expect(subject.Match(5.2)).To(g.BeTrue())
+		g.Expect(subject.Match(6.4)).To(g.BeTrue())
+		g.Expect(subject.Match(6.5)).To(g.BeFalse())
+		g.Expect(subject.Match(int64(4))).To(g.BeFalse())
+		g.Expect(subject.Match(int64(5))).To(g.BeTrue())
+		g.Expect(subject.Match(int64(6))).To(g.BeTrue())
+		g.Expect(subject.Match(int64(7))).To(g.BeFalse())
 	})
 })
 
@@ -177,25 +177,25 @@ var _ = Describe("Inclusion", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`+[1 2 3]`))
+		g.Expect(subject.String()).To(g.Equal(`+[1 2 3]`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.CRC64()).To(Equal(uint64(4016361724135366094)))
-		Expect(OneOf([]int64{2, 3, 1}).CRC64()).To(Equal(uint64(4016361724135366094)))
-		Expect(OneOf([]int64{7, 8, 9}).CRC64()).To(Equal(uint64(11523927376963847877)))
+		g.Expect(subject.CRC64()).To(g.Equal(uint64(4016361724135366094)))
+		g.Expect(OneOf([]int64{2, 3, 1}).CRC64()).To(g.Equal(uint64(4016361724135366094)))
+		g.Expect(OneOf([]int64{7, 8, 9}).CRC64()).To(g.Equal(uint64(11523927376963847877)))
 	})
 
 	It("should check inclusion", func() {
-		Expect(subject.Match(nil)).To(BeFalse())
-		Expect(subject.Match(int64(1))).To(BeTrue())
-		Expect(subject.Match(int64(7))).To(BeFalse())
+		g.Expect(subject.Match(nil)).To(g.BeFalse())
+		g.Expect(subject.Match(int64(1))).To(g.BeTrue())
+		g.Expect(subject.Match(int64(7))).To(g.BeFalse())
 
-		Expect(subject.Match(SortInts64())).To(BeFalse())
-		Expect(subject.Match(SortInts64(1))).To(BeTrue())
-		Expect(subject.Match(SortInts64(1, 2))).To(BeTrue())
-		Expect(subject.Match(SortInts64(7, 2))).To(BeTrue())
-		Expect(subject.Match(SortInts64(7, 8))).To(BeFalse())
+		g.Expect(subject.Match(SortInts64())).To(g.BeFalse())
+		g.Expect(subject.Match(SortInts64(1))).To(g.BeTrue())
+		g.Expect(subject.Match(SortInts64(1, 2))).To(g.BeTrue())
+		g.Expect(subject.Match(SortInts64(7, 2))).To(g.BeTrue())
+		g.Expect(subject.Match(SortInts64(7, 8))).To(g.BeFalse())
 	})
 })
 
@@ -208,25 +208,25 @@ var _ = Describe("Exclusion", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`-[1 2 3]`))
+		g.Expect(subject.String()).To(g.Equal(`-[1 2 3]`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.CRC64()).To(Equal(uint64(17194010691906675252)))
-		Expect(NoneOf([]int64{2, 3, 1}).CRC64()).To(Equal(uint64(17194010691906675252)))
-		Expect(NoneOf([]int64{7, 8, 9}).CRC64()).To(Equal(uint64(5101638233538279743)))
+		g.Expect(subject.CRC64()).To(g.Equal(uint64(17194010691906675252)))
+		g.Expect(NoneOf([]int64{2, 3, 1}).CRC64()).To(g.Equal(uint64(17194010691906675252)))
+		g.Expect(NoneOf([]int64{7, 8, 9}).CRC64()).To(g.Equal(uint64(5101638233538279743)))
 	})
 
 	It("should check exclusion", func() {
-		Expect(subject.Match(nil)).To(BeTrue())
-		Expect(subject.Match(int64(1))).To(BeFalse())
-		Expect(subject.Match(int64(7))).To(BeTrue())
+		g.Expect(subject.Match(nil)).To(g.BeTrue())
+		g.Expect(subject.Match(int64(1))).To(g.BeFalse())
+		g.Expect(subject.Match(int64(7))).To(g.BeTrue())
 
-		Expect(subject.Match(SortInts64())).To(BeTrue())
-		Expect(subject.Match(SortInts64(1))).To(BeFalse())
-		Expect(subject.Match(SortInts64(1, 2))).To(BeFalse())
-		Expect(subject.Match(SortInts64(7, 2))).To(BeFalse())
-		Expect(subject.Match(SortInts64(7, 8))).To(BeTrue())
+		g.Expect(subject.Match(SortInts64())).To(g.BeTrue())
+		g.Expect(subject.Match(SortInts64(1))).To(g.BeFalse())
+		g.Expect(subject.Match(SortInts64(1, 2))).To(g.BeFalse())
+		g.Expect(subject.Match(SortInts64(7, 2))).To(g.BeFalse())
+		g.Expect(subject.Match(SortInts64(7, 8))).To(g.BeTrue())
 	})
 
 })
@@ -240,24 +240,24 @@ var _ = Describe("Negation", func() {
 	})
 
 	It("should return a string", func() {
-		Expect(subject.String()).To(Equal(`!+[1 2 3]`))
+		g.Expect(subject.String()).To(g.Equal(`!+[1 2 3]`))
 	})
 
 	It("should have an ID", func() {
-		Expect(subject.CRC64()).To(Equal(uint64(5849970728172636964)))
+		g.Expect(subject.CRC64()).To(g.Equal(uint64(5849970728172636964)))
 	})
 
 	It("should require the opposite to match", func() {
-		Expect(subject.Match(nil)).To(BeTrue())
-		Expect(subject.Match(int64(1))).To(BeFalse())
-		Expect(subject.Match(int64(7))).To(BeTrue())
+		g.Expect(subject.Match(nil)).To(g.BeTrue())
+		g.Expect(subject.Match(int64(1))).To(g.BeFalse())
+		g.Expect(subject.Match(int64(7))).To(g.BeTrue())
 
-		Expect(subject.Match(SortInts64())).To(BeTrue())
-		Expect(subject.Match(SortInts64(1))).To(BeFalse())
-		Expect(subject.Match(SortInts64(1, 2))).To(BeFalse())
-		Expect(subject.Match(SortInts64(5, 2))).To(BeFalse())
-		Expect(subject.Match(SortInts64(7, 2))).To(BeFalse())
-		Expect(subject.Match(SortInts64(7, 8))).To(BeTrue())
+		g.Expect(subject.Match(SortInts64())).To(g.BeTrue())
+		g.Expect(subject.Match(SortInts64(1))).To(g.BeFalse())
+		g.Expect(subject.Match(SortInts64(1, 2))).To(g.BeFalse())
+		g.Expect(subject.Match(SortInts64(5, 2))).To(g.BeFalse())
+		g.Expect(subject.Match(SortInts64(7, 2))).To(g.BeFalse())
+		g.Expect(subject.Match(SortInts64(7, 8))).To(g.BeTrue())
 	})
 
 })
