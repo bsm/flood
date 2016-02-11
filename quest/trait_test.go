@@ -30,6 +30,10 @@ var _ = Describe("stringHash", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(BeNil())
 
+		res, err = subject.Find([]string{"value", "missing"})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(res).To(Equal([]ruleReference{{90, 1}}))
+
 		_, err = subject.Find(99)
 		Expect(err).To(HaveOccurred())
 	})
@@ -54,6 +58,10 @@ var _ = Describe("int64Hash", func() {
 		subject.Store(ruleReference{90, 1}, int64(27))
 
 		res, err := subject.Find(int64(27))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(res).To(Equal([]ruleReference{{90, 1}}))
+
+		res, err = subject.Find([]int64{27, 28})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(Equal([]ruleReference{{90, 1}}))
 
@@ -85,6 +93,10 @@ var _ = Describe("int32Hash", func() {
 		subject.Store(ruleReference{90, 1}, int32(27))
 
 		res, err := subject.Find(int32(27))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(res).To(Equal([]ruleReference{{90, 1}}))
+
+		res, err = subject.Find([]int32{27, 28})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(res).To(Equal([]ruleReference{{90, 1}}))
 

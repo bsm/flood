@@ -1,6 +1,9 @@
 package quest
 
-import "bytes"
+import (
+	"bytes"
+	"sync"
+)
 
 type checksum struct {
 	data []byte
@@ -50,9 +53,18 @@ func (c checksum) Mark(n int, value bool) checksum {
 
 // --------------------------------------------------------------------
 
+var checksumsPool sync.Pool
+
 type checksums map[Outcome]checksum
 
 // Marks marks rules index of an outcome
 func (c checksums) Mark(outcome Outcome, index int, value bool) {
 	c[outcome] = c[outcome].Mark(index, value)
+}
+
+// Reset quickly resets the checksums
+func (c checksums) Reset() {
+	for _, csum := range c {
+		csum.size = 0
+	}
 }

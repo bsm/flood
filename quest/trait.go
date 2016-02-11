@@ -11,8 +11,8 @@ const (
 	BoolHash
 )
 
-func errInvalidType(val interface{}, required interface{}) error {
-	return fmt.Errorf("quest: value %v (%T) is not %T", val, val, required)
+func errInvalidType(val interface{}, required string) error {
+	return fmt.Errorf("quest: value %v (%T) is not %s", val, val, required)
 }
 
 func errUnsupportedValue(cond *Condition, required interface{}) error {
@@ -27,12 +27,18 @@ func errUnsupportedComparator(cond *Condition, kind string) error {
 
 type stringHash map[string][]ruleReference
 
-func (h stringHash) Find(val interface{}) ([]ruleReference, error) {
-	vv, ok := val.(string)
-	if !ok {
-		return nil, errInvalidType(val, vv)
+func (h stringHash) Find(val interface{}) (refs []ruleReference, _ error) {
+	switch vv := val.(type) {
+	case string:
+		refs = h[vv]
+	case []string:
+		for _, v := range vv {
+			refs = append(refs, h[v]...)
+		}
+	default:
+		return nil, errInvalidType(val, "string")
 	}
-	return h[vv], nil
+	return
 }
 
 func (h stringHash) Check(cond *Condition) error {
@@ -54,12 +60,18 @@ func (h stringHash) Store(ref ruleReference, val interface{}) {
 
 type int64Hash map[int64][]ruleReference
 
-func (h int64Hash) Find(val interface{}) ([]ruleReference, error) {
-	vv, ok := val.(int64)
-	if !ok {
-		return nil, errInvalidType(val, vv)
+func (h int64Hash) Find(val interface{}) (refs []ruleReference, _ error) {
+	switch vv := val.(type) {
+	case int64:
+		refs = h[vv]
+	case []int64:
+		for _, v := range vv {
+			refs = append(refs, h[v]...)
+		}
+	default:
+		return nil, errInvalidType(val, "int64")
 	}
-	return h[vv], nil
+	return
 }
 
 func (h int64Hash) Check(cond *Condition) error {
@@ -81,12 +93,18 @@ func (h int64Hash) Store(ref ruleReference, val interface{}) {
 
 type int32Hash map[int32][]ruleReference
 
-func (h int32Hash) Find(val interface{}) ([]ruleReference, error) {
-	vv, ok := val.(int32)
-	if !ok {
-		return nil, errInvalidType(val, vv)
+func (h int32Hash) Find(val interface{}) (refs []ruleReference, _ error) {
+	switch vv := val.(type) {
+	case int32:
+		refs = h[vv]
+	case []int32:
+		for _, v := range vv {
+			refs = append(refs, h[v]...)
+		}
+	default:
+		return nil, errInvalidType(val, "int32")
 	}
-	return h[vv], nil
+	return
 }
 
 func (h int32Hash) Check(cond *Condition) error {
@@ -108,12 +126,14 @@ func (h int32Hash) Store(ref ruleReference, val interface{}) {
 
 type boolHash map[bool][]ruleReference
 
-func (h boolHash) Find(val interface{}) ([]ruleReference, error) {
-	vv, ok := val.(bool)
-	if !ok {
-		return nil, errInvalidType(val, vv)
+func (h boolHash) Find(val interface{}) (refs []ruleReference, _ error) {
+	switch vv := val.(type) {
+	case bool:
+		refs = h[vv]
+	default:
+		return nil, errInvalidType(val, "bool")
 	}
-	return h[vv], nil
+	return
 }
 
 func (h boolHash) Check(cond *Condition) error {

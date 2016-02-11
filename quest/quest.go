@@ -130,7 +130,13 @@ func (q *Quest) AddRule(outcome Outcome, rule *Rule) error {
 
 // Match matches a fact against known rules and collects outcomes
 func (q *Quest) Match(fact Fact) ([]Outcome, error) {
-	matches := make(checksums)
+	var matches checksums
+	if cached := checksumsPool.Get(); cached != nil {
+		matches = cached.(checksums)
+	} else {
+		matches = make(checksums)
+	}
+
 	for name, data := range q.traits {
 		val := fact.GetFactValue(name)
 		if val == nil {
@@ -149,9 +155,10 @@ func (q *Quest) Match(fact Fact) ([]Outcome, error) {
 
 	var res []Outcome
 	for outcome, csum := range matches {
-		if q.outcomes[outcome].Equal(csum) {
+		if csum.size != 0 && q.outcomes[outcome].Equal(csum) {
 			res = append(res, outcome)
 		}
 	}
+	checksumsPool.Put(matches)
 	return res, nil
 }
