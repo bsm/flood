@@ -74,28 +74,6 @@ var _ = Describe("checksum", func() {
 		Expect(a.Equal(b)).To(BeTrue())
 	})
 
-	It("should create unions", func() {
-		a := checksum{}
-		a = a.Mark(7, true)
-		a = a.Mark(8, true)
-		a = a.Mark(9, true)
-		Expect(a.size).To(Equal(10))
-		Expect(a.data).To(Equal([]byte{128, 3}))
-
-		b := checksum{}
-		b = b.Mark(8, true)
-		b = b.Mark(15, true)
-		b = b.Mark(16, true)
-		Expect(b.size).To(Equal(17))
-		Expect(b.data).To(Equal([]byte{0, 129, 1}))
-
-		Expect(a.Union(b).size).To(Equal(17))
-		Expect(a.Union(b).data).To(Equal([]byte{128, 131, 1}))
-
-		Expect(b.Union(a).size).To(Equal(17))
-		Expect(b.Union(a).data).To(Equal([]byte{128, 131, 1}))
-	})
-
 })
 
 var _ = Describe("checksums", func() {
@@ -116,6 +94,14 @@ var _ = Describe("checksums", func() {
 		Expect(subject).To(Equal(checksums{
 			100: checksum{size: 3, data: []byte{5}},
 			101: checksum{size: 2, data: []byte{2}},
+		}))
+	})
+
+	It("should reset", func() {
+		subject.Reset()
+		Expect(subject).To(Equal(checksums{
+			100: checksum{size: 0, data: []byte{}},
+			101: checksum{size: 0, data: []byte{}},
 		}))
 	})
 

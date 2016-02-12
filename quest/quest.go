@@ -133,6 +133,7 @@ func (q *Quest) Match(fact Fact) ([]Outcome, error) {
 	var matches checksums
 	if cached := checksumsPool.Get(); cached != nil {
 		matches = cached.(checksums)
+		matches.Reset()
 	} else {
 		matches = make(checksums)
 	}

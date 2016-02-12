@@ -10,33 +10,20 @@ type checksum struct {
 	size int
 }
 
+func (c checksum) Reset() checksum {
+	c.size = 0
+	c.data = c.data[:0]
+	return c
+}
+
 func (c checksum) Equal(o checksum) bool {
 	return c.size == o.size && bytes.Equal(c.data, o.data)
 }
 
-func (c checksum) Union(o checksum) checksum {
-	if c.size > o.size {
-		return o.Union(c)
-	}
-
-	res := checksum{
-		data: make([]byte, len(o.data)),
-		size: o.size,
-	}
-	copy(res.data, o.data)
-
-	for i, b := range c.data {
-		res.data[i] = res.data[i] | b
-	}
-	return res
-}
-
 func (c checksum) Mark(n int, value bool) checksum {
 	pos := n / 8
-	if pos >= len(c.data) {
-		data := make([]byte, pos+1)
-		copy(data, c.data)
-		c.data = data
+	for i := len(c.data); i <= pos; i++ {
+		c.data = append(c.data, 0)
 	}
 
 	rem := byte(1) << uint(n%8)
@@ -64,7 +51,7 @@ func (c checksums) Mark(outcome Outcome, index int, value bool) {
 
 // Reset quickly resets the checksums
 func (c checksums) Reset() {
-	for _, csum := range c {
-		csum.size = 0
+	for outcome := range c {
+		c[outcome] = c[outcome].Reset()
 	}
 }
