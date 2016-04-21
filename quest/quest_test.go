@@ -53,7 +53,6 @@ var _ = Describe("Quest", func() {
 			},
 		})
 		Expect(err).NotTo(HaveOccurred())
-
 	})
 
 	It("should register traits", func() {
@@ -96,6 +95,9 @@ var _ = Describe("Quest", func() {
 		Entry("country and browser match 91, OS matches 92",
 			&mockFact{Country: "GB", Browser: "firefox", OS: "ios"},
 			[]Outcome{91, 92}),
+		Entry("browser/country doesn not match 91, OS matches 92",
+			&mockFact{Country: "DE", Browser: "ie", OS: "ios"},
+			[]Outcome{92}),
 		Entry("country excluded",
 			&mockFact{Country: "US", Browser: "firefox", OS: "ios"},
 			[]Outcome{}),
