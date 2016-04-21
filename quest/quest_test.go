@@ -10,6 +10,14 @@ import (
 
 var _ = Describe("Quest", func() {
 	var subject *Quest
+	var seed = func(o Outcome, rs []Rule) error {
+		for _, r := range rs {
+			if err := subject.AddRule(o, &r); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 
 	BeforeEach(func() {
 		subject = New()
@@ -21,38 +29,39 @@ var _ = Describe("Quest", func() {
 		err = subject.RegisterTrait("os", StringHash)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = subject.AddRule(91, &Rule{
-			Conditions: []Condition{
+		Expect(seed(91, []Rule{
+			{Conditions: []Condition{
 				{"country", ComparatorEqual, "GB"},
-			},
-		})
-		Expect(err).NotTo(HaveOccurred())
-
-		err = subject.AddRule(91, &Rule{
-			Conditions: []Condition{
+			}},
+			{Conditions: []Condition{
 				{"browser", ComparatorEqual, "firefox"},
 				{"browser", ComparatorEqual, "chrome"},
 				{"browser", ComparatorEqual, "safari"},
-			},
-		})
-		Expect(err).NotTo(HaveOccurred())
+			}},
+		})).NotTo(HaveOccurred())
 
-		err = subject.AddRule(92, &Rule{
-			Conditions: []Condition{
+		Expect(seed(92, []Rule{
+			{Negation: true, Conditions: []Condition{
 				{"country", ComparatorEqual, "US"},
 				{"country", ComparatorEqual, "CA"},
-			},
-			Negation: true,
-		})
-		Expect(err).NotTo(HaveOccurred())
-
-		err = subject.AddRule(92, &Rule{
-			Conditions: []Condition{
+			}},
+			{Conditions: []Condition{
 				{"browser", ComparatorEqual, "safari"},
 				{"os", ComparatorEqual, "ios"},
-			},
-		})
-		Expect(err).NotTo(HaveOccurred())
+			}},
+		})).NotTo(HaveOccurred())
+
+		Expect(seed(93, []Rule{
+			{Conditions: []Condition{
+				{"country", ComparatorEqual, "GB"},
+			}},
+			{Negation: true, Conditions: []Condition{
+				{"browser", ComparatorEqual, "chrome"},
+			}},
+			{Negation: true, Conditions: []Condition{
+				{"os", ComparatorEqual, "linux"},
+			}},
+		})).NotTo(HaveOccurred())
 	})
 
 	It("should register traits", func() {
@@ -62,7 +71,7 @@ var _ = Describe("Quest", func() {
 	})
 
 	It("should append rules/outcomes", func() {
-		Expect(subject.outcomes).To(HaveLen(2))
+		Expect(subject.outcomes).To(HaveLen(3))
 
 		err := subject.AddRule(99, &Rule{
 			Conditions: []Condition{{"unknown", ComparatorEqual, "value"}},
@@ -94,13 +103,16 @@ var _ = Describe("Quest", func() {
 			[]Outcome{91, 92}),
 		Entry("country and browser match 91, OS matches 92",
 			&mockFact{Country: "GB", Browser: "firefox", OS: "ios"},
-			[]Outcome{91, 92}),
+			[]Outcome{91, 92, 93}),
 		Entry("browser/country doesn not match 91, OS matches 92",
 			&mockFact{Country: "DE", Browser: "ie", OS: "ios"},
 			[]Outcome{92}),
 		Entry("country excluded",
 			&mockFact{Country: "US", Browser: "firefox", OS: "ios"},
 			[]Outcome{}),
+		Entry("multiple exclusions",
+			&mockFact{Country: "GB", Browser: "firefox", OS: "osx"},
+			[]Outcome{91, 93}),
 	)
 
 })

@@ -54,6 +54,11 @@ const (
 	// ComparatorLessOrEqual
 )
 
+type traitData struct {
+	Data       matchData
+	Exclusions []ruleReference
+}
+
 type matchData interface {
 	Check(*Condition) error
 	Store(ruleReference, interface{})
@@ -70,14 +75,14 @@ type ruleReference struct {
 // Quest can register rules and compare with facts to match outcomes
 type Quest struct {
 	outcomes checksums
-	traits   map[string]matchData
+	traits   map[string]traitData
 }
 
 // New creates a new, blank quest object
 func New() *Quest {
 	return &Quest{
 		outcomes: make(checksums),
-		traits:   make(map[string]matchData),
+		traits:   make(map[string]traitData),
 	}
 }
 
@@ -89,13 +94,13 @@ func (q *Quest) RegisterTrait(name string, kind TraitKind) error {
 
 	switch kind {
 	case StringHash:
-		q.traits[name] = make(stringHash)
+		q.traits[name] = traitData{Data: make(stringHash)}
 	case Int64Hash:
-		q.traits[name] = make(int64Hash)
+		q.traits[name] = traitData{Data: make(int64Hash)}
 	case Int32Hash:
-		q.traits[name] = make(int32Hash)
+		q.traits[name] = traitData{Data: make(int32Hash)}
 	case BoolHash:
-		q.traits[name] = make(boolHash)
+		q.traits[name] = traitData{Data: make(boolHash)}
 	default:
 		return fmt.Errorf("quest: unknown trait kind %d", kind)
 	}
@@ -112,7 +117,7 @@ func (q *Quest) AddRule(outcome Outcome, rule *Rule) error {
 		if !ok {
 			return fmt.Errorf("quest: condition references unknown trait '%s'", cond.Trait)
 		}
-		if err := trait.Check(&cond); err != nil {
+		if err := trait.Data.Check(&cond); err != nil {
 			return err
 		}
 	}
@@ -121,7 +126,12 @@ func (q *Quest) AddRule(outcome Outcome, rule *Rule) error {
 	index := q.outcomes[outcome].size
 	rlref := ruleReference{outcome, index}
 	for _, cond := range rule.Conditions {
-		q.traits[cond.Trait].Store(rlref, cond.Value)
+		trait := q.traits[cond.Trait]
+		trait.Data.Store(rlref, cond.Value)
+		if rule.Negation {
+			trait.Exclusions = append(trait.Exclusions, rlref)
+		}
+		q.traits[cond.Trait] = trait
 	}
 	q.outcomes.Mark(outcome, index, !rule.Negation)
 
@@ -138,17 +148,20 @@ func (q *Quest) Match(fact Fact) ([]Outcome, error) {
 		matches = make(checksums)
 	}
 
-	for name, data := range q.traits {
+	for name, trait := range q.traits {
 		val := fact.GetFactValue(name)
 		if val == nil {
 			continue
 		}
 
-		refs, err := data.Find(val)
+		refs, err := trait.Data.Find(val)
 		if err != nil {
 			return nil, err
 		}
 
+		for _, ref := range trait.Exclusions {
+			matches.Mark(ref.outcome, ref.index, false)
+		}
 		for _, ref := range refs {
 			matches.Mark(ref.outcome, ref.index, true)
 		}
