@@ -1,0 +1,8 @@
+package: github.com/bsm/flood
+import:
+- package: gopkg.in/tomb.v2
+testImport:
+- package: github.com/onsi/ginkgo
+  subpackages:
+  - extensions/table
+- package: github.com/onsi/gomega
