@@ -1,9 +1,15 @@
 hash: 26fa170075d7933d53a0b8aee8126ffa68d69f68f69db6e8222024dc6606031d
-updated: 2016-06-25T10:24:32.317676127+01:00
+updated: 2016-06-25T10:54:31.853437639+01:00
 imports:
 - name: gopkg.in/tomb.v2
   version: 14b3d72120e8d10ea6e6b7f87f7175734b1faab8
 testImports:
+- name: github.com/golang/protobuf
+  version: 0c1f6d65b5a189c2250d10e71a5506f06f9fa0a0
+  subpackages:
+  - proto
+  - proto/testdata
+  - ptypes/any
 - name: github.com/onsi/ginkgo
   version: 059cec02d342bab423425a99b191186a03255e9e
   subpackages:
@@ -18,10 +24,13 @@ testImports:
   - reporters
   - reporters/stenographer
   - types
-  - internal/containernode
+  - ginkgo/convert
+  - ginkgo/interrupthandler
+  - ginkgo/nodot
+  - ginkgo/testrunner
+  - ginkgo/testsuite
+  - ginkgo/watch
   - internal/leafnodes
-  - internal/spec
-  - internal/specrunner
 - name: github.com/onsi/gomega
   version: 0df7b7fdb38123c12a1f569f0affb2c2a7bd72cf
   subpackages:
@@ -31,7 +40,6 @@ testImports:
   - matchers
   - types
   - internal/oraclematcher
-  - format
   - matchers/support/goraph/bipartitegraph
   - matchers/support/goraph/edge
   - matchers/support/goraph/node
